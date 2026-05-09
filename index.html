@@ -355,6 +355,7 @@
           <div class="actions">
             <button type="button" id="sample-btn" class="secondary">載入範例資料</button>
             <button type="button" id="fetch-btn" class="secondary">自動抓取 K 線</button>
+            <button type="button" id="auto-analyze-btn" class="secondary">一鍵抓取並分析</button>
             <button type="button" id="download-btn" class="secondary">下載 index.html</button>
             <button type="submit">開始分析</button>
           </div>
@@ -398,6 +399,7 @@
       const form = document.getElementById("analysis-form");
       const sampleBtn = document.getElementById("sample-btn");
       const fetchBtn = document.getElementById("fetch-btn");
+      const autoAnalyzeBtn = document.getElementById("auto-analyze-btn");
       const downloadBtn = document.getElementById("download-btn");
       const resultEmpty = document.getElementById("result-empty");
       const resultBox = document.getElementById("result");
@@ -927,6 +929,21 @@
           await fetchAndFillKlineBySymbol();
         } catch (error) {
           alert(error.message);
+        }
+      });
+
+      autoAnalyzeBtn.addEventListener("click", async () => {
+        const originalText = autoAnalyzeBtn.textContent;
+        autoAnalyzeBtn.disabled = true;
+        autoAnalyzeBtn.textContent = "分析中...";
+        try {
+          await fetchAndFillKlineBySymbol({ silent: true });
+          await runAnalysis();
+        } catch (error) {
+          alert(error.message);
+        } finally {
+          autoAnalyzeBtn.disabled = false;
+          autoAnalyzeBtn.textContent = originalText;
         }
       });
 
