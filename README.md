@@ -1,6 +1,6 @@
-# K 線與股價分析助手（手機友善版）
+# K 線與股價分析助手（單檔 Landing Page）
 
-使用純前端 `HTML / CSS / JavaScript` 製作，可直接部署到任何靜態網站空間。
+使用純前端製作，所有程式已整合在同一個 `index.html`（HTML + CSS + JavaScript）。
 
 ## 功能
 
