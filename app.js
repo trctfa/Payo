@@ -2,6 +2,7 @@ const form = document.getElementById("analysis-form");
 const sampleBtn = document.getElementById("sample-btn");
 const resultEmpty = document.getElementById("result-empty");
 const resultBox = document.getElementById("result");
+const accordionItems = Array.from(document.querySelectorAll(".accordion-item"));
 
 const output = {
   state: document.getElementById("state"),
@@ -15,6 +16,21 @@ const chart = document.getElementById("chart");
 const ctx = chart.getContext("2d");
 let lastRows = [];
 let lastPrice = null;
+
+function openAccordion(targetId) {
+  accordionItems.forEach((item) => {
+    item.open = item.id === targetId;
+  });
+}
+
+accordionItems.forEach((item) => {
+  item.addEventListener("toggle", () => {
+    if (!item.open) return;
+    accordionItems.forEach((other) => {
+      if (other !== item) other.open = false;
+    });
+  });
+});
 
 function parseRows(raw) {
   return raw
@@ -263,6 +279,7 @@ function runAnalysis() {
   const rawData = document.getElementById("kline-data").value.trim();
 
   if (!symbol || Number.isNaN(price) || price <= 0) {
+    openAccordion("accordion-basic");
     alert("請先填寫股票代碼與有效股價。");
     return;
   }
@@ -271,11 +288,13 @@ function runAnalysis() {
   try {
     rows = parseRows(rawData);
   } catch (error) {
+    openAccordion("accordion-kline");
     alert(error.message);
     return;
   }
 
   if (rows.length < 20) {
+    openAccordion("accordion-kline");
     alert("建議至少輸入 20 根 K，分析會比較穩定。");
     return;
   }

@@ -61,6 +61,65 @@ h2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.input-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.accordion {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.accordion-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.accordion-item summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.1rem;
+  font-weight: 700;
+}
+
+.accordion-item summary::marker,
+.accordion-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-item summary::after {
+  content: "⌄";
+  position: absolute;
+  right: 1rem;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.accordion-item summary {
+  position: relative;
+}
+
+.accordion-item[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.accordion-item summary small {
+  font-size: 0.8rem;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+.accordion-body {
+  padding: 0 0.9rem 0.9rem;
+  background: #fff;
+  border-top: 1px solid #e4e7ec;
+}
+
 label {
   display: grid;
   gap: 0.35rem;
