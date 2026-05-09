@@ -356,6 +356,7 @@
 
           <div class="actions">
             <button type="button" id="sample-btn" class="secondary">載入範例資料</button>
+            <button type="button" id="download-btn" class="secondary">下載 index.html</button>
             <button type="submit">開始分析</button>
           </div>
         </form>
@@ -397,6 +398,7 @@
     <script>
       const form = document.getElementById("analysis-form");
       const sampleBtn = document.getElementById("sample-btn");
+      const downloadBtn = document.getElementById("download-btn");
       const resultEmpty = document.getElementById("result-empty");
       const resultBox = document.getElementById("result");
       const accordionItems = Array.from(document.querySelectorAll(".accordion-item"));
@@ -666,6 +668,38 @@
         });
       }
 
+      async function downloadCurrentIndex() {
+        const html = `<!DOCTYPE html>\n${document.documentElement.outerHTML}`;
+        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+
+        // Mobile-first: if Web Share supports files, let users save/share directly from phone.
+        if (typeof File !== "undefined" && navigator.share && navigator.canShare) {
+          const file = new File([blob], "index.html", { type: "text/html" });
+          if (navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                title: "index.html",
+                text: "K 線與股價分析助手 landing page",
+                files: [file],
+              });
+              return;
+            } catch (error) {
+              if (error && error.name === "AbortError") return;
+            }
+          }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "index.html";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
       function runAnalysis() {
         const symbol = document.getElementById("symbol").value.trim();
         const market = document.getElementById("market").value;
@@ -756,6 +790,10 @@
           "960,964,956,959,20300",
           "959,963,955,957,19800",
         ].join("\n");
+      });
+
+      downloadBtn.addEventListener("click", () => {
+        downloadCurrentIndex();
       });
 
       form.addEventListener("submit", (event) => {
