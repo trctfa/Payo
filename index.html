@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K 線與股價分析助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero card">
+        <h1>K 線與股價分析助手</h1>
+        <p>
+          輸入股票資訊與 K 線資料，快速取得「目前股價的意義」與可執行的觀察重點。
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>輸入資料</h2>
+        <form id="analysis-form" class="form-grid">
+          <label>
+            股票代碼
+            <input type="text" id="symbol" placeholder="例如：2330 / AAPL" required />
+          </label>
+
+          <label>
+            市場
+            <select id="market">
+              <option value="台股">台股</option>
+              <option value="美股">美股</option>
+              <option value="加密貨幣">加密貨幣</option>
+              <option value="其他">其他</option>
+            </select>
+          </label>
+
+          <label>
+            目前股價
+            <input type="number" id="price" step="0.01" min="0" placeholder="例如：955" required />
+          </label>
+
+          <label>
+            K 線週期
+            <select id="timeframe">
+              <option value="1D">1D（日線）</option>
+              <option value="4H">4H（四小時）</option>
+              <option value="1H">1H（一小時）</option>
+              <option value="15m">15m（十五分鐘）</option>
+            </select>
+          </label>
+
+          <label>
+            操作偏好
+            <select id="style">
+              <option value="短線">短線</option>
+              <option value="波段">波段</option>
+              <option value="保守">保守</option>
+            </select>
+          </label>
+
+          <label class="full">
+            補充資訊（可選）
+            <textarea
+              id="notes"
+              rows="3"
+              placeholder="例如：下週有法說會、已連續上漲 5 天、近期成交量放大..."
+            ></textarea>
+          </label>
+
+          <label class="full">
+            K 線資料（必填，CSV 格式）
+            <textarea
+              id="kline-data"
+              rows="8"
+              required
+              placeholder="每行一根 K，格式：open,high,low,close,volume&#10;例如：930,938,925,935,21500"
+            ></textarea>
+            <small>
+              建議至少貼上 20 根 K。若你只有收盤價，可填成：close,close,close,close,0
+            </small>
+          </label>
+
+          <div class="actions full">
+            <button type="button" id="sample-btn" class="secondary">載入範例資料</button>
+            <button type="submit">開始分析</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>K 線視覺化</h2>
+        <canvas id="chart" width="1000" height="360" aria-label="K線圖"></canvas>
+      </section>
+
+      <section class="card result-card">
+        <h2>分析結果</h2>
+        <div id="result-empty" class="empty">輸入資料後按下「開始分析」，結果會顯示在這裡。</div>
+        <div id="result" class="hidden">
+          <article>
+            <h3>1. 市場狀態</h3>
+            <p id="state"></p>
+          </article>
+          <article>
+            <h3>2. 股價位置意義</h3>
+            <p id="meaning"></p>
+          </article>
+          <article>
+            <h3>3. 可能劇本</h3>
+            <ul id="scenarios"></ul>
+          </article>
+          <article>
+            <h3>4. 風險提醒</h3>
+            <ul id="risks"></ul>
+          </article>
+          <article>
+            <h3>5. 觀察與優化建議</h3>
+            <ul id="actions"></ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
