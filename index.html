@@ -289,8 +289,7 @@
                     id="price"
                     step="0.01"
                     min="0"
-                    placeholder="例如：955"
-                    required
+                    placeholder="可留空，系統自動帶入最新收盤價"
                   />
                 </label>
 
@@ -335,19 +334,18 @@
             <details class="accordion-item" id="accordion-kline">
               <summary>
                 <span>K 線資料</span>
-                <small>必填，CSV：open,high,low,close,volume</small>
+                <small>可選填，CSV：open,high,low,close,volume</small>
               </summary>
               <div class="accordion-body">
                 <label>
-                  K 線資料（必填，CSV 格式）
+                  K 線資料（選填，CSV 格式）
                   <textarea
                     id="kline-data"
                     rows="8"
-                    required
                     placeholder="每行一根 K，格式：open,high,low,close,volume&#10;例如：930,938,925,935,21500"
                   ></textarea>
                   <small>
-                    建議至少貼上 20 根 K。若你只有收盤價，可填成：close,close,close,close,0
+                    若留空，系統會依股票代號自動抓取台股日 K；手動貼資料建議至少 20 根。
                   </small>
                 </label>
               </div>
@@ -356,6 +354,7 @@
 
           <div class="actions">
             <button type="button" id="sample-btn" class="secondary">載入範例資料</button>
+            <button type="button" id="fetch-btn" class="secondary">自動抓取 K 線</button>
             <button type="button" id="download-btn" class="secondary">下載 index.html</button>
             <button type="submit">開始分析</button>
           </div>
@@ -398,6 +397,7 @@
     <script>
       const form = document.getElementById("analysis-form");
       const sampleBtn = document.getElementById("sample-btn");
+      const fetchBtn = document.getElementById("fetch-btn");
       const downloadBtn = document.getElementById("download-btn");
       const resultEmpty = document.getElementById("result-empty");
       const resultBox = document.getElementById("result");
@@ -668,6 +668,114 @@
         });
       }
 
+      function normalizeStockNumber(value) {
+        return value.trim().toUpperCase();
+      }
+
+      function formatTwseMonth(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        return `${year}${month}01`;
+      }
+
+      function parseNumericString(raw) {
+        return Number(String(raw).replace(/,/g, "").trim());
+      }
+
+      async function fetchTwseDailyKlines(stockNo, monthsBack = 8) {
+        const rows = [];
+        let hasAnyResponse = false;
+        const now = new Date();
+
+        for (let offset = monthsBack - 1; offset >= 0; offset -= 1) {
+          const monthDate = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+          const dateKey = formatTwseMonth(monthDate);
+          const url = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${dateKey}&stockNo=${encodeURIComponent(
+            stockNo
+          )}`;
+
+          try {
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) continue;
+            const payload = await response.json();
+            if (!Array.isArray(payload?.data)) continue;
+            hasAnyResponse = true;
+
+            payload.data.forEach((entry) => {
+              const [, volumeRaw, , openRaw, highRaw, lowRaw, closeRaw] = entry;
+              const open = parseNumericString(openRaw);
+              const high = parseNumericString(highRaw);
+              const low = parseNumericString(lowRaw);
+              const close = parseNumericString(closeRaw);
+              const volume = parseNumericString(volumeRaw);
+
+              if ([open, high, low, close].some((value) => Number.isNaN(value) || value <= 0)) {
+                return;
+              }
+
+              rows.push({ open, high, low, close, volume: Number.isNaN(volume) ? 0 : volume });
+            });
+          } catch (error) {
+            // Continue to fetch next month; final error will be handled below.
+          }
+        }
+
+        if (!hasAnyResponse || rows.length === 0) {
+          throw new Error("無法抓取台股 K 線資料，請稍後再試或改用手動貼上。");
+        }
+
+        return rows.slice(-120);
+      }
+
+      async function fetchAndFillKlineBySymbol(options = {}) {
+        const { silent = false } = options;
+        const symbolInput = document.getElementById("symbol");
+        const marketInput = document.getElementById("market");
+        const timeframeInput = document.getElementById("timeframe");
+        const priceInput = document.getElementById("price");
+        const dataInput = document.getElementById("kline-data");
+        const stockNo = normalizeStockNumber(symbolInput.value);
+
+        if (!stockNo) {
+          openAccordion("accordion-basic");
+          throw new Error("請先輸入股票代號。");
+        }
+        if (marketInput.value !== "台股") {
+          openAccordion("accordion-basic");
+          throw new Error("目前自動抓取僅支援台股（TWSE 日 K）。");
+        }
+
+        fetchBtn.disabled = true;
+        const originalText = fetchBtn.textContent;
+        fetchBtn.textContent = "抓取中...";
+
+        try {
+          const rows = await fetchTwseDailyKlines(stockNo);
+          if (rows.length < 20) {
+            throw new Error("取得資料不足 20 根 K，請改用手動貼上資料。");
+          }
+
+          dataInput.value = rows
+            .map((row) => `${row.open},${row.high},${row.low},${row.close},${row.volume}`)
+            .join("\n");
+
+          const latestClose = rows[rows.length - 1].close;
+          if (!priceInput.value || Number(priceInput.value) <= 0) {
+            priceInput.value = latestClose.toFixed(2);
+          }
+          timeframeInput.value = "1D";
+          openAccordion("accordion-kline");
+
+          if (!silent) {
+            alert(`已抓取 ${rows.length} 根台股日 K，並帶入最新收盤價 ${latestClose.toFixed(2)}。`);
+          }
+          return rows;
+        } finally {
+          fetchBtn.disabled = false;
+          fetchBtn.textContent = originalText;
+        }
+      }
+
       async function downloadCurrentIndex() {
         const html = `<!DOCTYPE html>\n${document.documentElement.outerHTML}`;
         const blob = new Blob([html], { type: "text/html;charset=utf-8" });
@@ -700,24 +808,37 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
 
-      function runAnalysis() {
+      async function runAnalysis() {
         const symbol = document.getElementById("symbol").value.trim();
         const market = document.getElementById("market").value;
-        const price = Number(document.getElementById("price").value);
+        const priceInput = document.getElementById("price");
+        let price = Number(priceInput.value);
         const timeframe = document.getElementById("timeframe").value;
         const style = document.getElementById("style").value;
         const notes = document.getElementById("notes").value;
-        const rawData = document.getElementById("kline-data").value.trim();
+        const dataInput = document.getElementById("kline-data");
+        let rawData = dataInput.value.trim();
 
-        if (!symbol || Number.isNaN(price) || price <= 0) {
+        if (!symbol) {
           openAccordion("accordion-basic");
-          alert("請先填寫股票代碼與有效股價。");
+          alert("請先填寫股票代碼。");
           return;
         }
 
         let rows = [];
+        if (!rawData) {
+          try {
+            rows = await fetchAndFillKlineBySymbol({ silent: true });
+            rawData = dataInput.value.trim();
+          } catch (error) {
+            openAccordion("accordion-kline");
+            alert(error.message);
+            return;
+          }
+        }
+
         try {
-          rows = parseRows(rawData);
+          rows = rows.length ? rows : parseRows(rawData);
         } catch (error) {
           openAccordion("accordion-kline");
           alert(error.message);
@@ -728,6 +849,11 @@
           openAccordion("accordion-kline");
           alert("建議至少輸入 20 根 K，分析會比較穩定。");
           return;
+        }
+
+        if (Number.isNaN(price) || price <= 0) {
+          price = rows[rows.length - 1].close;
+          priceInput.value = price.toFixed(2);
         }
 
         const report = analyze({
@@ -796,9 +922,17 @@
         downloadCurrentIndex();
       });
 
-      form.addEventListener("submit", (event) => {
+      fetchBtn.addEventListener("click", async () => {
+        try {
+          await fetchAndFillKlineBySymbol();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        runAnalysis();
+        await runAnalysis();
       });
 
       window.addEventListener("resize", resizeCanvas);
