@@ -76,6 +76,10 @@
       width: 120px;
     }
 
+    #mergeMode {
+      min-width: 240px;
+    }
+
     button {
       cursor: pointer;
       transition: all 0.15s ease;
@@ -215,8 +219,13 @@
     </div>
 
     <div class="actions" style="margin-top:14px;">
-      <label for="mergeLength">合併總長度（分鐘:秒）</label>
-      <input id="mergeLength" class="small-input" type="text" placeholder="例如 15:00">
+      <label for="mergeMode">合併模式</label>
+      <select id="mergeMode">
+        <option value="minutes">指定分鐘數</option>
+        <option value="full">從頭到尾（不設停止時間）</option>
+      </select>
+      <label for="mergeMinutes">合併長度（分鐘）</label>
+      <input id="mergeMinutes" class="small-input" type="number" min="1" step="1" value="15">
       <button id="mergeBtn" class="btn-primary">開始合併</button>
       <button id="downloadBtn" disabled>下載合併檔案</button>
     </div>
@@ -249,7 +258,8 @@
       randomCount: document.getElementById("randomCount"),
       totalTime: document.getElementById("totalTime"),
       audioList: document.getElementById("audioList"),
-      mergeLength: document.getElementById("mergeLength"),
+      mergeMode: document.getElementById("mergeMode"),
+      mergeMinutes: document.getElementById("mergeMinutes"),
       mergeProgress: document.getElementById("mergeProgress"),
       status: document.getElementById("status"),
       previewPlayer: document.getElementById("previewPlayer"),
@@ -270,6 +280,16 @@
       state.mergedOutputUrl = null;
       state.mergedOutputName = "";
       els.downloadBtn.disabled = true;
+    }
+
+    function updateMergeModeUI() {
+      const unlimited = els.mergeMode.value === "full";
+      els.mergeMinutes.disabled = unlimited;
+      if (unlimited) {
+        els.mergeMinutes.title = "從頭到尾模式不需要設定分鐘數";
+      } else {
+        els.mergeMinutes.title = "";
+      }
     }
 
     function formatDuration(seconds) {
@@ -416,13 +436,15 @@
       setStatus(`隨機新增 ${chosen.length} 個音檔。`);
     }
 
-    function parseLengthToSeconds(raw) {
-      const text = String(raw || "").trim();
-      const match = /^(\d+):([0-5]?\d)$/.exec(text);
-      if (!match) {
+    function getTargetSecondsByMode() {
+      if (els.mergeMode.value === "full") {
+        return Number.POSITIVE_INFINITY;
+      }
+      const minutes = Number.parseInt(els.mergeMinutes.value, 10);
+      if (!Number.isInteger(minutes) || minutes <= 0) {
         return null;
       }
-      return Number(match[1]) * 60 + Number(match[2]);
+      return minutes * 60;
     }
 
     async function decodeFileToBuffer(audioContext, file) {
@@ -485,11 +507,12 @@
         return;
       }
 
-      const targetSeconds = parseLengthToSeconds(els.mergeLength.value);
-      if (!targetSeconds || targetSeconds <= 0) {
-        setStatus("請輸入正確的時間格式（分鐘:秒），例如 12:30。");
+      const targetSeconds = getTargetSecondsByMode();
+      if (targetSeconds === null) {
+        setStatus("請輸入正確的分鐘數（正整數），或切換到從頭到尾模式。");
         return;
       }
+      const unlimitedMode = !Number.isFinite(targetSeconds);
 
       clearMergedOutput();
       els.mergeProgress.value = 0;
@@ -524,8 +547,8 @@
       let timelineSec = 0;
       for (let i = 0; i < decoded.length && timelineSec < targetSeconds; i += 1) {
         const item = decoded[i];
-        const remain = targetSeconds - timelineSec;
-        const clipSec = Math.min(item.buffer.duration, remain);
+        const remain = unlimitedMode ? item.buffer.duration : (targetSeconds - timelineSec);
+        const clipSec = unlimitedMode ? item.buffer.duration : Math.min(item.buffer.duration, remain);
         if (clipSec <= 0) {
           break;
         }
@@ -533,7 +556,7 @@
           buffer: item.buffer,
           startSec: timelineSec,
           clipSec,
-          clipped: clipSec < item.buffer.duration
+          clipped: !unlimitedMode && clipSec < item.buffer.duration
         });
         timelineSec += clipSec;
       }
@@ -585,7 +608,11 @@
       state.mergedOutputName = `merged_${stamp}.wav`;
       els.downloadBtn.disabled = false;
       els.mergeProgress.value = 100;
-      setStatus(`輸出完成：${state.mergedOutputName}（請點「下載合併檔案」）`);
+      if (unlimitedMode) {
+        setStatus(`輸出完成：${state.mergedOutputName}（從頭到尾模式，請點「下載合併檔案」）`);
+      } else {
+        setStatus(`輸出完成：${state.mergedOutputName}（${els.mergeMinutes.value} 分鐘，請點「下載合併檔案」）`);
+      }
     }
 
     function clearList() {
@@ -695,6 +722,13 @@
     document.getElementById("mergeBtn").addEventListener("click", () => {
       mergeAudio().catch((err) => setStatus(`合併失敗：${err.message}`));
     });
+    els.mergeMode.addEventListener("change", () => {
+      updateMergeModeUI();
+      clearMergedOutput();
+    });
+    els.mergeMinutes.addEventListener("input", () => {
+      clearMergedOutput();
+    });
     document.getElementById("downloadBtn").addEventListener("click", () => {
       if (!state.mergedOutputUrl) {
         setStatus("目前沒有可下載的合併檔案，請先執行合併。");
@@ -764,6 +798,7 @@
     });
 
     renderList();
+    updateMergeModeUI();
     setStatus("就緒，請先加入音檔。");
   </script>
 </body>
