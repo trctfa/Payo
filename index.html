@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音檔合併工具（網頁版）</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --border: #d1d5db;
+      --danger: #b91c1c;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111827;
+        --panel: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --border: #374151;
+        --danger: #ef4444;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      width: min(980px, 94vw);
+      margin: 24px auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 140px 1fr auto auto;
+      gap: 10px 12px;
+      align-items: center;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .input,
+    .small-input,
+    button,
+    select {
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      background: transparent;
+      color: inherit;
+      font-size: 0.95rem;
+    }
+
+    .input[readonly] {
+      color: var(--muted);
+    }
+
+    .small-input {
+      width: 120px;
+    }
+
+    button {
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      color: #fff;
+      border-color: var(--primary-hover);
+    }
+
+    .btn-danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .list-header {
+      margin: 16px 0 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    select {
+      width: 100%;
+      height: 220px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    progress {
+      width: 100%;
+      height: 20px;
+      margin-top: 16px;
+    }
+
+    .status {
+      margin-top: 10px;
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 2px;
+      grid-column: 2 / span 3;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .hint {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>音檔合併工具（單頁版）</h1>
+
+    <div class="grid">
+      <label for="introPath">片頭音檔</label>
+      <input id="introPath" class="input" type="text" value="未選擇片頭音檔" readonly>
+      <button id="introBtn">選擇片頭音檔</button>
+      <span></span>
+
+      <label for="selectedCount">選擇音檔</label>
+      <input id="selectedCount" class="input" type="text" value="尚未加入音檔" readonly>
+      <button id="addFilesBtn">新增音檔</button>
+      <button id="clearBtn" class="btn-danger">清空清單</button>
+
+      <label for="folderPath">隨機選取資料夾</label>
+      <input id="folderPath" class="input" type="text" value="未選擇資料夾" readonly>
+      <button id="folderBtn">選擇資料夾</button>
+      <span></span>
+
+      <label for="randomCount">隨機選取數量</label>
+      <input id="randomCount" class="small-input" type="number" min="1" value="5">
+      <button id="addRandomBtn">隨機新增音檔</button>
+      <span></span>
+      <p class="hint">瀏覽器無法直接讀整個系統資料夾，請透過「選擇資料夾」授權後再隨機加入。</p>
+    </div>
+
+    <div class="list-header">
+      <strong>已選擇的音檔</strong>
+      <span>總時間長度：<strong id="totalTime">00:00</strong></span>
+    </div>
+    <select id="audioList" multiple></select>
+
+    <div class="actions">
+      <button id="moveUpBtn">上移</button>
+      <button id="moveDownBtn">下移</button>
+      <button id="deleteBtn" class="btn-danger">刪除選中</button>
+      <button id="previewBtn">預聽選中的音檔</button>
+      <button id="stopBtn">停止播放</button>
+    </div>
+
+    <div class="actions" style="margin-top:14px;">
+      <label for="mergeLength">合併總長度（分鐘:秒）</label>
+      <input id="mergeLength" class="small-input" type="text" placeholder="例如 15:00">
+      <button id="mergeBtn" class="btn-primary">開始合併</button>
+    </div>
+
+    <progress id="mergeProgress" max="100" value="0"></progress>
+    <audio id="previewPlayer" controls></audio>
+    <div id="status" class="status"></div>
+
+    <input id="introInput" type="file" accept="audio/*" hidden>
+    <input id="filesInput" type="file" accept="audio/*" multiple hidden>
+    <input id="folderInput" type="file" accept="audio/*" webkitdirectory directory multiple hidden>
+  </main>
+
+  <script>
+    const state = {
+      introFile: null,
+      entries: [],
+      randomPool: [],
+      nextId: 1,
+      fadeOutMs: 2000,
+      previewUrl: null
+    };
+
+    const els = {
+      introPath: document.getElementById("introPath"),
+      selectedCount: document.getElementById("selectedCount"),
+      folderPath: document.getElementById("folderPath"),
+      randomCount: document.getElementById("randomCount"),
+      totalTime: document.getElementById("totalTime"),
+      audioList: document.getElementById("audioList"),
+      mergeLength: document.getElementById("mergeLength"),
+      mergeProgress: document.getElementById("mergeProgress"),
+      status: document.getElementById("status"),
+      previewPlayer: document.getElementById("previewPlayer"),
+      introInput: document.getElementById("introInput"),
+      filesInput: document.getElementById("filesInput"),
+      folderInput: document.getElementById("folderInput")
+    };
+
+    function setStatus(message) {
+      els.status.textContent = message;
+    }
+
+    function formatDuration(seconds) {
+      const sec = Math.max(0, Math.floor(seconds));
+      const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+      const ss = String(sec % 60).padStart(2, "0");
+      return `${mm}:${ss}`;
+    }
+
+    function getFileKey(file) {
+      return `${file.name}|${file.size}|${file.lastModified}`;
+    }
+
+    function isAudioFile(file) {
+      if (file.type && file.type.startsWith("audio/")) {
+        return true;
+      }
+      const lower = file.name.toLowerCase();
+      return [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".webm"].some((ext) => lower.endsWith(ext));
+    }
+
+    async function getDuration(file) {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const duration = await new Promise((resolve, reject) => {
+          const audio = new Audio();
+          audio.preload = "metadata";
+          audio.src = objectUrl;
+          audio.onloadedmetadata = () => resolve(audio.duration);
+          audio.onerror = () => reject(new Error(`無法讀取音檔長度：${file.name}`));
+        });
+        return Number.isFinite(duration) ? duration : 0;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    function getSelectedIndexes() {
+      return Array.from(els.audioList.selectedOptions).map((option) => Number(option.dataset.index));
+    }
+
+    function renderList(selectedIds = []) {
+      els.audioList.innerHTML = "";
+      state.entries.forEach((entry, index) => {
+        const option = document.createElement("option");
+        option.value = String(entry.id);
+        option.dataset.index = String(index);
+        const introPrefix = entry.isIntro ? "片頭: " : "";
+        option.textContent = `${introPrefix}${entry.file.name} (${formatDuration(entry.durationSec)})`;
+        if (selectedIds.includes(entry.id)) {
+          option.selected = true;
+        }
+        els.audioList.appendChild(option);
+      });
+
+      const total = state.entries.reduce((sum, e) => sum + e.durationSec, 0);
+      els.totalTime.textContent = formatDuration(total);
+      els.selectedCount.value = state.entries.length === 0 ? "尚未加入音檔" : `已選擇 ${state.entries.length} 個檔案`;
+    }
+
+    async function ensureIntroAdded() {
+      if (!state.introFile) {
+        return;
+      }
+      const exists = state.entries.some((entry) => entry.isIntro || getFileKey(entry.file) === getFileKey(state.introFile));
+      if (exists) {
+        return;
+      }
+      const durationSec = await getDuration(state.introFile);
+      state.entries.unshift({
+        id: state.nextId++,
+        file: state.introFile,
+        durationSec,
+        isIntro: true
+      });
+    }
+
+    async function addFiles(files) {
+      const validFiles = Array.from(files).filter(isAudioFile);
+      if (validFiles.length === 0) {
+        setStatus("沒有可加入的音訊檔案。");
+        return;
+      }
+
+      setStatus("讀取音檔長度中...");
+      if (state.entries.length === 0) {
+        await ensureIntroAdded();
+      }
+
+      for (const file of validFiles) {
+        const durationSec = await getDuration(file);
+        state.entries.push({
+          id: state.nextId++,
+          file,
+          durationSec,
+          isIntro: false
+        });
+      }
+      renderList();
+      setStatus(`已新增 ${validFiles.length} 個音檔。`);
+    }
+
+    async function addRandomFiles() {
+      if (state.randomPool.length === 0) {
+        setStatus("請先選擇資料夾。");
+        return;
+      }
+
+      const count = Number.parseInt(els.randomCount.value, 10);
+      if (!Number.isInteger(count) || count <= 0) {
+        setStatus("請輸入正確的隨機數量（正整數）。");
+        return;
+      }
+
+      await ensureIntroAdded();
+
+      const existingKeys = new Set(state.entries.map((entry) => getFileKey(entry.file)));
+      const available = state.randomPool.filter((file) => !existingKeys.has(getFileKey(file)));
+      if (available.length === 0) {
+        setStatus("資料夾中的音檔都已加入，沒有可用檔案。");
+        return;
+      }
+
+      const chosen = [];
+      const temp = [...available];
+      const pickCount = Math.min(count, temp.length);
+      for (let i = 0; i < pickCount; i += 1) {
+        const idx = Math.floor(Math.random() * temp.length);
+        chosen.push(temp[idx]);
+        temp.splice(idx, 1);
+      }
+
+      setStatus("隨機加入中，讀取音檔長度...");
+      for (const file of chosen) {
+        const durationSec = await getDuration(file);
+        state.entries.push({
+          id: state.nextId++,
+          file,
+          durationSec,
+          isIntro: false
+        });
+      }
+      renderList();
+      setStatus(`隨機新增 ${chosen.length} 個音檔。`);
+    }
+
+    function parseLengthToSeconds(raw) {
+      const text = String(raw || "").trim();
+      const match = /^(\d+):([0-5]?\d)$/.exec(text);
+      if (!match) {
+        return null;
+      }
+      return Number(match[1]) * 60 + Number(match[2]);
+    }
+
+    async function decodeFileToBuffer(audioContext, file) {
+      const arrayBuffer = await file.arrayBuffer();
+      return audioContext.decodeAudioData(arrayBuffer.slice(0));
+    }
+
+    function audioBufferToWavBlob(buffer) {
+      const numChannels = buffer.numberOfChannels;
+      const sampleRate = buffer.sampleRate;
+      const numFrames = buffer.length;
+      const bytesPerSample = 2;
+      const blockAlign = numChannels * bytesPerSample;
+      const dataSize = numFrames * blockAlign;
+      const totalSize = 44 + dataSize;
+
+      const view = new DataView(new ArrayBuffer(totalSize));
+      let offset = 0;
+
+      function writeString(str) {
+        for (let i = 0; i < str.length; i += 1) {
+          view.setUint8(offset, str.charCodeAt(i));
+          offset += 1;
+        }
+      }
+
+      writeString("RIFF");
+      view.setUint32(offset, 36 + dataSize, true); offset += 4;
+      writeString("WAVE");
+      writeString("fmt ");
+      view.setUint32(offset, 16, true); offset += 4;
+      view.setUint16(offset, 1, true); offset += 2;
+      view.setUint16(offset, numChannels, true); offset += 2;
+      view.setUint32(offset, sampleRate, true); offset += 4;
+      view.setUint32(offset, sampleRate * blockAlign, true); offset += 4;
+      view.setUint16(offset, blockAlign, true); offset += 2;
+      view.setUint16(offset, bytesPerSample * 8, true); offset += 2;
+      writeString("data");
+      view.setUint32(offset, dataSize, true); offset += 4;
+
+      const channels = [];
+      for (let ch = 0; ch < numChannels; ch += 1) {
+        channels.push(buffer.getChannelData(ch));
+      }
+
+      for (let i = 0; i < numFrames; i += 1) {
+        for (let ch = 0; ch < numChannels; ch += 1) {
+          const sample = Math.max(-1, Math.min(1, channels[ch][i] || 0));
+          view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+          offset += 2;
+        }
+      }
+
+      return new Blob([view.buffer], { type: "audio/wav" });
+    }
+
+    async function mergeAudio() {
+      if (state.entries.length === 0) {
+        setStatus("請先加入音檔。");
+        return;
+      }
+
+      const targetSeconds = parseLengthToSeconds(els.mergeLength.value);
+      if (!targetSeconds || targetSeconds <= 0) {
+        setStatus("請輸入正確的時間格式（分鐘:秒），例如 12:30。");
+        return;
+      }
+
+      els.mergeProgress.value = 0;
+      setStatus("開始處理...");
+
+      const onlineContext = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = [];
+      try {
+        for (let i = 0; i < state.entries.length; i += 1) {
+          const entry = state.entries[i];
+          setStatus(`解碼音檔中 (${i + 1}/${state.entries.length})：${entry.file.name}`);
+          const buffer = await decodeFileToBuffer(onlineContext, entry.file);
+          decoded.push({ entry, buffer });
+          els.mergeProgress.value = ((i + 1) / state.entries.length) * 65;
+        }
+      } catch (err) {
+        setStatus(`解碼失敗：${err.message}`);
+        await onlineContext.close();
+        return;
+      }
+      await onlineContext.close();
+
+      if (decoded.length === 0) {
+        setStatus("沒有可合併的音檔。");
+        return;
+      }
+
+      const sampleRate = decoded[0].buffer.sampleRate;
+      const channels = Math.max(...decoded.map((x) => x.buffer.numberOfChannels));
+
+      const schedule = [];
+      let timelineSec = 0;
+      for (let i = 0; i < decoded.length && timelineSec < targetSeconds; i += 1) {
+        const item = decoded[i];
+        const remain = targetSeconds - timelineSec;
+        const clipSec = Math.min(item.buffer.duration, remain);
+        if (clipSec <= 0) {
+          break;
+        }
+        schedule.push({
+          buffer: item.buffer,
+          startSec: timelineSec,
+          clipSec,
+          clipped: clipSec < item.buffer.duration
+        });
+        timelineSec += clipSec;
+      }
+
+      if (schedule.length === 0 || timelineSec <= 0) {
+        setStatus("合併失敗：有效音訊長度為 0。");
+        return;
+      }
+
+      const frameCount = Math.max(1, Math.ceil(timelineSec * sampleRate));
+      const offline = new OfflineAudioContext(channels, frameCount, sampleRate);
+
+      schedule.forEach((item) => {
+        const source = offline.createBufferSource();
+        const gain = offline.createGain();
+        source.buffer = item.buffer;
+        source.connect(gain);
+        gain.connect(offline.destination);
+
+        source.start(item.startSec, 0, item.clipSec);
+
+        if (item.clipped) {
+          const fadeSec = Math.min(state.fadeOutMs / 1000, item.clipSec);
+          const fadeStart = item.startSec + Math.max(0, item.clipSec - fadeSec);
+          gain.gain.setValueAtTime(1, item.startSec);
+          gain.gain.setValueAtTime(1, fadeStart);
+          gain.gain.linearRampToValueAtTime(0, item.startSec + item.clipSec);
+        }
+      });
+
+      els.mergeProgress.value = 80;
+      setStatus("渲染合併音訊中...");
+
+      let mergedBuffer;
+      try {
+        mergedBuffer = await offline.startRendering();
+      } catch (err) {
+        setStatus(`渲染失敗：${err.message}`);
+        return;
+      }
+
+      els.mergeProgress.value = 92;
+      setStatus("產生下載檔案中...");
+
+      const wavBlob = audioBufferToWavBlob(mergedBuffer);
+      const downloadUrl = URL.createObjectURL(wavBlob);
+      const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `merged_${stamp}.wav`;
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
+      els.mergeProgress.value = 100;
+      setStatus(`輸出完成：merged_${stamp}.wav`);
+    }
+
+    function clearList() {
+      state.entries = [];
+      renderList();
+      setStatus("清單已清空。");
+      if (state.introFile) {
+        ensureIntroAdded()
+          .then(() => {
+            renderList();
+            setStatus("清單已清空，已自動加入片頭音檔。");
+          })
+          .catch((err) => setStatus(`片頭音檔加入失敗：${err.message}`));
+      }
+    }
+
+    function deleteSelected() {
+      const selectedIdx = new Set(getSelectedIndexes());
+      if (selectedIdx.size === 0) {
+        setStatus("請先選擇要刪除的音檔。");
+        return;
+      }
+      const removed = state.entries.filter((_, idx) => selectedIdx.has(idx)).length;
+      state.entries = state.entries.filter((_, idx) => !selectedIdx.has(idx));
+      renderList();
+      setStatus(`已刪除 ${removed} 個音檔。`);
+    }
+
+    function moveUp() {
+      const indexes = getSelectedIndexes().sort((a, b) => a - b);
+      if (indexes.length === 0) {
+        setStatus("請先選擇要移動的音檔。");
+        return;
+      }
+
+      for (const idx of indexes) {
+        if (idx > 0) {
+          [state.entries[idx - 1], state.entries[idx]] = [state.entries[idx], state.entries[idx - 1]];
+        }
+      }
+      const selectedIds = indexes.map((idx) => state.entries[Math.max(0, idx - 1)].id);
+      renderList(selectedIds);
+      setStatus("已上移選中的音檔。");
+    }
+
+    function moveDown() {
+      const indexes = getSelectedIndexes().sort((a, b) => b - a);
+      if (indexes.length === 0) {
+        setStatus("請先選擇要移動的音檔。");
+        return;
+      }
+
+      for (const idx of indexes) {
+        if (idx < state.entries.length - 1) {
+          [state.entries[idx + 1], state.entries[idx]] = [state.entries[idx], state.entries[idx + 1]];
+        }
+      }
+      const selectedIds = indexes.map((idx) => state.entries[Math.min(state.entries.length - 1, idx + 1)].id);
+      renderList(selectedIds);
+      setStatus("已下移選中的音檔。");
+    }
+
+    function previewSelected() {
+      const indexes = getSelectedIndexes().sort((a, b) => a - b);
+      if (indexes.length === 0) {
+        setStatus("請先選擇要預聽的音檔。");
+        return;
+      }
+      const entry = state.entries[indexes[0]];
+      if (!entry) {
+        setStatus("找不到選中的音檔。");
+        return;
+      }
+
+      stopPreview();
+      state.previewUrl = URL.createObjectURL(entry.file);
+      els.previewPlayer.src = state.previewUrl;
+      els.previewPlayer.play().catch(() => {
+        setStatus("預聽被瀏覽器阻擋，請手動按播放。");
+      });
+      setStatus(`正在播放：${entry.file.name}`);
+    }
+
+    function stopPreview() {
+      els.previewPlayer.pause();
+      els.previewPlayer.currentTime = 0;
+      if (state.previewUrl) {
+        URL.revokeObjectURL(state.previewUrl);
+        state.previewUrl = null;
+      }
+      setStatus("播放已停止。");
+    }
+
+    document.getElementById("introBtn").addEventListener("click", () => els.introInput.click());
+    document.getElementById("addFilesBtn").addEventListener("click", () => els.filesInput.click());
+    document.getElementById("folderBtn").addEventListener("click", () => els.folderInput.click());
+
+    document.getElementById("clearBtn").addEventListener("click", clearList);
+    document.getElementById("addRandomBtn").addEventListener("click", () => {
+      addRandomFiles().catch((err) => setStatus(`隨機加入失敗：${err.message}`));
+    });
+    document.getElementById("deleteBtn").addEventListener("click", deleteSelected);
+    document.getElementById("moveUpBtn").addEventListener("click", moveUp);
+    document.getElementById("moveDownBtn").addEventListener("click", moveDown);
+    document.getElementById("previewBtn").addEventListener("click", previewSelected);
+    document.getElementById("stopBtn").addEventListener("click", stopPreview);
+    document.getElementById("mergeBtn").addEventListener("click", () => {
+      mergeAudio().catch((err) => setStatus(`合併失敗：${err.message}`));
+    });
+
+    els.introInput.addEventListener("change", async (event) => {
+      const [file] = event.target.files || [];
+      if (!file) {
+        return;
+      }
+      if (!isAudioFile(file)) {
+        setStatus("片頭檔案不是音訊格式。");
+        return;
+      }
+      state.introFile = file;
+      els.introPath.value = file.name;
+
+      try {
+        state.entries = state.entries.filter((entry) => !entry.isIntro);
+        await ensureIntroAdded();
+        renderList();
+        setStatus(`已設定片頭音檔：${file.name}`);
+      } catch (err) {
+        setStatus(`片頭讀取失敗：${err.message}`);
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    els.filesInput.addEventListener("change", (event) => {
+      addFiles(event.target.files || [])
+        .catch((err) => setStatus(`新增音檔失敗：${err.message}`))
+        .finally(() => {
+          event.target.value = "";
+        });
+    });
+
+    els.folderInput.addEventListener("change", (event) => {
+      const files = Array.from(event.target.files || []).filter(isAudioFile);
+      if (files.length === 0) {
+        state.randomPool = [];
+        els.folderPath.value = "未選擇資料夾";
+        setStatus("選擇的資料夾沒有可用的音訊檔案。");
+        return;
+      }
+      state.randomPool = files;
+      const samplePath = files[0].webkitRelativePath || files[0].name;
+      const folderName = samplePath.split("/")[0] || "已選擇資料夾";
+      els.folderPath.value = `${folderName} (${files.length} 個音檔)`;
+      setStatus(`已選擇資料夾，共 ${files.length} 個音檔可供隨機加入。`);
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (state.previewUrl) {
+        URL.revokeObjectURL(state.previewUrl);
+      }
+    });
+
+    renderList();
+    setStatus("就緒，請先加入音檔。");
+  </script>
+</body>
+</html>
