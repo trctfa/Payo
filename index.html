@@ -6,28 +6,15 @@
   <title>音檔合併工具（網頁版）</title>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #f3f5f8;
-      --panel: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --primary: #1d4ed8;
-      --primary-hover: #1e40af;
-      --border: #d1d5db;
-      --danger: #b91c1c;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111827;
-        --panel: #1f2937;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --primary: #3b82f6;
-        --primary-hover: #2563eb;
-        --border: #374151;
-        --danger: #ef4444;
-      }
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: #111111;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #2a2a2a;
+      --danger: #ef4444;
     }
 
     * {
@@ -49,7 +36,7 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 20px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
     }
 
     h1 {
@@ -137,6 +124,11 @@
     select {
       width: 100%;
       height: 220px;
+    }
+
+    option {
+      background: #111111;
+      color: var(--text);
     }
 
     .actions {
