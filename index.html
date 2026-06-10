@@ -84,6 +84,10 @@
       cursor: pointer;
       transition: all 0.15s ease;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     button:hover {
@@ -142,6 +146,25 @@
       margin-top: 10px;
     }
 
+    .btn-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .desktop-only {
+      display: inline;
+    }
+
+    .mobile-only {
+      display: none;
+    }
+
     progress {
       width: 100%;
       height: 20px;
@@ -168,11 +191,72 @@
     }
 
     @media (max-width: 900px) {
+      body {
+        background: #0a0a0a;
+      }
+
+      .container {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 1.2rem;
+      }
+
       .grid {
         grid-template-columns: 1fr;
+        gap: 8px;
       }
+
       .hint {
         grid-column: auto;
+        margin-bottom: 8px;
+      }
+
+      .input,
+      .small-input,
+      button,
+      select {
+        min-height: 42px;
+      }
+
+      .small-input,
+      #mergeMode {
+        width: 100%;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .actions > label {
+        grid-column: 1 / -1;
+      }
+
+      .actions > input,
+      .actions > select {
+        grid-column: 1 / -1;
+      }
+
+      #mergeBtn,
+      #downloadBtn {
+        grid-column: span 1;
+      }
+
+      .desktop-only {
+        display: none;
+      }
+
+      .mobile-only {
+        display: inline;
       }
     }
   </style>
@@ -184,22 +268,37 @@
     <div class="grid">
       <label for="introPath">片頭音檔</label>
       <input id="introPath" class="input" type="text" value="未選擇片頭音檔" readonly>
-      <button id="introBtn">選擇片頭音檔</button>
+      <button id="introBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M12 4v11m0 0-4-4m4 4 4-4"/></svg>
+        <span>選擇片頭音檔</span>
+      </button>
       <span></span>
 
       <label for="selectedCount">選擇音檔</label>
       <input id="selectedCount" class="input" type="text" value="尚未加入音檔" readonly>
-      <button id="addFilesBtn">新增音檔</button>
-      <button id="clearBtn" class="btn-danger">清空清單</button>
+      <button id="addFilesBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>新增音檔</span>
+      </button>
+      <button id="clearBtn" class="btn-danger">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+        <span>清空清單</span>
+      </button>
 
       <label for="folderPath">隨機選取資料夾</label>
       <input id="folderPath" class="input" type="text" value="未選擇資料夾" readonly>
-      <button id="folderBtn">選擇資料夾</button>
+      <button id="folderBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>選擇資料夾</span>
+      </button>
       <span></span>
 
       <label for="randomCount">隨機選取數量</label>
       <input id="randomCount" class="small-input" type="number" min="1" value="5">
-      <button id="addRandomBtn">隨機新增音檔</button>
+      <button id="addRandomBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l3 10h2l3-10h4M9 7l6 10"/></svg>
+        <span>隨機新增音檔</span>
+      </button>
       <span></span>
       <p class="hint">瀏覽器無法直接讀整個系統資料夾，請透過「選擇資料夾」授權後再隨機加入。</p>
     </div>
@@ -211,11 +310,26 @@
     <select id="audioList" multiple></select>
 
     <div class="actions">
-      <button id="moveUpBtn">上移</button>
-      <button id="moveDownBtn">下移</button>
-      <button id="deleteBtn" class="btn-danger">刪除選中</button>
-      <button id="previewBtn">預聽選中的音檔</button>
-      <button id="stopBtn">停止播放</button>
+      <button id="moveUpBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg>
+        <span class="desktop-only">上移</span><span class="mobile-only">上移排序</span>
+      </button>
+      <button id="moveDownBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg>
+        <span class="desktop-only">下移</span><span class="mobile-only">下移排序</span>
+      </button>
+      <button id="deleteBtn" class="btn-danger">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+        <span>刪除選中</span>
+      </button>
+      <button id="previewBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6 10 6-10 6z"/></svg>
+        <span class="desktop-only">預聽選中的音檔</span><span class="mobile-only">預聽</span>
+      </button>
+      <button id="stopBtn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg>
+        <span>停止播放</span>
+      </button>
     </div>
 
     <div class="actions" style="margin-top:14px;">
@@ -226,8 +340,14 @@
       </select>
       <label for="mergeMinutes">合併長度（分鐘）</label>
       <input id="mergeMinutes" class="small-input" type="number" min="1" step="1" value="15">
-      <button id="mergeBtn" class="btn-primary">開始合併</button>
-      <button id="downloadBtn" disabled>下載合併檔案</button>
+      <button id="mergeBtn" class="btn-primary">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l3 12h2l3-12h4M9 6l6 12"/></svg>
+        <span>開始合併</span>
+      </button>
+      <button id="downloadBtn" disabled>
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M4 20h16"/></svg>
+        <span>下載合併檔案</span>
+      </button>
     </div>
 
     <progress id="mergeProgress" max="100" value="0"></progress>
