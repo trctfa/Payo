@@ -100,6 +100,13 @@
       color: var(--primary);
     }
 
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
     .btn-primary {
       background: var(--primary);
       color: #fff;
@@ -219,6 +226,7 @@
       <label for="mergeLength">合併總長度（分鐘:秒）</label>
       <input id="mergeLength" class="small-input" type="text" placeholder="例如 15:00">
       <button id="mergeBtn" class="btn-primary">開始合併</button>
+      <button id="downloadBtn" disabled>下載合併檔案</button>
     </div>
 
     <progress id="mergeProgress" max="100" value="0"></progress>
@@ -237,7 +245,9 @@
       randomPool: [],
       nextId: 1,
       fadeOutMs: 2000,
-      previewUrl: null
+      previewUrl: null,
+      mergedOutputUrl: null,
+      mergedOutputName: ""
     };
 
     const els = {
@@ -251,6 +261,7 @@
       mergeProgress: document.getElementById("mergeProgress"),
       status: document.getElementById("status"),
       previewPlayer: document.getElementById("previewPlayer"),
+      downloadBtn: document.getElementById("downloadBtn"),
       introInput: document.getElementById("introInput"),
       filesInput: document.getElementById("filesInput"),
       folderInput: document.getElementById("folderInput")
@@ -258,6 +269,15 @@
 
     function setStatus(message) {
       els.status.textContent = message;
+    }
+
+    function clearMergedOutput() {
+      if (state.mergedOutputUrl) {
+        URL.revokeObjectURL(state.mergedOutputUrl);
+      }
+      state.mergedOutputUrl = null;
+      state.mergedOutputName = "";
+      els.downloadBtn.disabled = true;
     }
 
     function formatDuration(seconds) {
@@ -479,6 +499,7 @@
         return;
       }
 
+      clearMergedOutput();
       els.mergeProgress.value = 0;
       setStatus("開始處理...");
 
@@ -568,14 +589,11 @@
       const wavBlob = audioBufferToWavBlob(mergedBuffer);
       const downloadUrl = URL.createObjectURL(wavBlob);
       const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `merged_${stamp}.wav`;
-      link.click();
-
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
+      state.mergedOutputUrl = downloadUrl;
+      state.mergedOutputName = `merged_${stamp}.wav`;
+      els.downloadBtn.disabled = false;
       els.mergeProgress.value = 100;
-      setStatus(`輸出完成：merged_${stamp}.wav`);
+      setStatus(`輸出完成：${state.mergedOutputName}（請點「下載合併檔案」）`);
     }
 
     function clearList() {
@@ -685,6 +703,17 @@
     document.getElementById("mergeBtn").addEventListener("click", () => {
       mergeAudio().catch((err) => setStatus(`合併失敗：${err.message}`));
     });
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      if (!state.mergedOutputUrl) {
+        setStatus("目前沒有可下載的合併檔案，請先執行合併。");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = state.mergedOutputUrl;
+      link.download = state.mergedOutputName || "merged_audio.wav";
+      link.click();
+      setStatus(`開始下載：${link.download}`);
+    });
 
     els.introInput.addEventListener("change", async (event) => {
       const [file] = event.target.files || [];
@@ -736,6 +765,9 @@
     window.addEventListener("beforeunload", () => {
       if (state.previewUrl) {
         URL.revokeObjectURL(state.previewUrl);
+      }
+      if (state.mergedOutputUrl) {
+        URL.revokeObjectURL(state.mergedOutputUrl);
       }
     });
 
