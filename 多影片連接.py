@@ -1,8 +1,23 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import os, threading, time, cv2, subprocess, re, math
+import os, sys, threading, time, subprocess, re, math
 from datetime import timedelta, datetime
-from PIL import Image, ImageTk
+
+try:
+    import cv2
+except ImportError:
+    print("錯誤：找不到 cv2 (OpenCV)")
+    print("請在 PowerShell 執行以下指令安裝依賴：")
+    print(f'  & "{sys.executable}" -m pip install opencv-python Pillow')
+    sys.exit(1)
+
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    print("錯誤：找不到 PIL (Pillow)")
+    print("請在 PowerShell 執行以下指令：")
+    print(f'  & "{sys.executable}" -m pip install Pillow')
+    sys.exit(1)
 
 # 處理 GPU 監控套件
 try:
