@@ -4,29 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>族語隨身譯 — 中文一鍵翻譯成原住民族語，還會唸給你聽</title>
-<meta name="description" content="輸入中文，一鍵翻譯成 16 族原住民族語，並用 AI 語音合成朗讀、下載音檔。語料服務由原住民族語言研究發展基金會 AI 實驗室提供。">
+<meta name="description" content="輸入中文，一鍵翻譯成 16 族原住民族語，逐句編輯、試聽、下載音檔或串接成一個語音檔。語料服務由原住民族語言研究發展基金會 AI 實驗室提供。">
 <style>
-  :root {
-    --bg: #0f172a;
-    --card: #1e293b;
-    --card-2: #273449;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --accent-2: #818cf8;
-    --ok: #34d399;
-    --err: #f87171;
-    --radius: 16px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
+    margin: 0;
     font-family: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    background: #0f172a;
+    color: #e2e8f0;
     line-height: 1.6;
   }
-
-  /* ---------- Hero ---------- */
   .hero {
     text-align: center;
     padding: 72px 20px 48px;
@@ -39,7 +25,7 @@
     padding: 6px 14px;
     border: 1px solid rgba(56,189,248,.4);
     border-radius: 999px;
-    color: var(--accent);
+    color: #38bdf8;
     font-size: 14px;
     margin-bottom: 20px;
   }
@@ -47,23 +33,23 @@
     font-size: clamp(28px, 5vw, 48px);
     font-weight: 900;
     letter-spacing: .02em;
-    margin-bottom: 16px;
+    margin: 0 0 16px;
   }
   .hero h1 .grad {
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   .hero p {
-    color: var(--muted);
+    color: #94a3b8;
     font-size: clamp(15px, 2.2vw, 18px);
-    max-width: 560px;
+    max-width: 600px;
     margin: 0 auto 28px;
   }
   .hero .cta {
     display: inline-block;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
     color: #0b1220;
     font-weight: 700;
     padding: 13px 34px;
@@ -73,116 +59,31 @@
     transition: transform .15s, box-shadow .15s;
   }
   .hero .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(56,189,248,.35); }
-
-  /* ---------- Features ---------- */
   .features {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     max-width: 960px;
     margin: 0 auto;
     padding: 24px 20px 8px;
   }
   .feature {
-    background: var(--card);
+    background: #1e293b;
     border: 1px solid rgba(148,163,184,.12);
-    border-radius: var(--radius);
+    border-radius: 16px;
     padding: 22px;
   }
   .feature .icon { font-size: 26px; margin-bottom: 10px; }
-  .feature h3 { font-size: 17px; margin-bottom: 6px; }
-  .feature p { color: var(--muted); font-size: 14px; }
-
-  /* ---------- Tool ---------- */
-  .tool-wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 24px; }
-  .tool {
-    background: var(--card);
-    border: 1px solid rgba(148,163,184,.15);
-    border-radius: var(--radius);
-    padding: 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.35);
-  }
-  .tool h2 { font-size: 22px; margin-bottom: 18px; }
-  .selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
-  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-  select, textarea {
-    width: 100%;
-    background: var(--card-2);
-    color: var(--text);
-    border: 1px solid rgba(148,163,184,.25);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 15px;
-    font-family: inherit;
-  }
-  select:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  textarea { resize: vertical; min-height: 88px; margin-bottom: 14px; }
-  .run-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 17px;
-    font-weight: 700;
-    font-family: inherit;
-    color: #0b1220;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    cursor: pointer;
-    transition: filter .15s, transform .1s;
-  }
-  .run-btn:hover:not(:disabled) { filter: brightness(1.1); }
-  .run-btn:active:not(:disabled) { transform: scale(.99); }
-  .run-btn:disabled { opacity: .55; cursor: wait; }
-  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .btn-row .run-btn { flex: 1; min-width: 200px; }
-  .run-btn.alt { background: linear-gradient(90deg, #34d399, #38bdf8); }
-
-  .pair { padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.15); }
-  .pair:last-of-type { border-bottom: 0; }
-  .pair .zh { color: var(--muted); font-size: 14px; }
-  .pair .tr { color: var(--ok); font-size: 17px; font-weight: 700; word-break: break-word; }
-  .pair .tr.fail { color: var(--err); font-weight: 400; }
-  #pairs { margin-bottom: 12px; max-height: 320px; overflow-y: auto; }
-
-  .status { margin-top: 14px; font-size: 14px; color: var(--accent); min-height: 21px; }
-  .status.err { color: var(--err); }
-  .result {
-    display: none;
-    margin-top: 14px;
-    background: var(--card-2);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .result.show { display: block; }
-  .result .native {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--ok);
-    word-break: break-word;
-    margin-bottom: 12px;
-  }
-  .result audio { width: 100%; margin-bottom: 12px; }
-  .result .dl {
-    display: inline-block;
-    background: var(--ok);
-    color: #06281c;
-    font-weight: 700;
-    font-size: 15px;
-    padding: 9px 22px;
-    border-radius: 999px;
-    text-decoration: none;
-    cursor: pointer;
-    border: 0;
-    font-family: inherit;
-  }
-
+  .feature h3 { font-size: 17px; margin: 0 0 6px; }
+  .feature p { color: #94a3b8; font-size: 14px; margin: 0; }
+  #tool { padding: 24px 16px; }
   footer {
     text-align: center;
-    color: var(--muted);
+    color: #94a3b8;
     font-size: 13px;
-    padding: 36px 20px 44px;
+    padding: 24px 20px 44px;
   }
-  footer a { color: var(--accent); text-decoration: none; }
+  footer a { color: #38bdf8; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -190,78 +91,258 @@
 <section class="hero">
   <span class="badge">16 族 42 種語別 ・ AI 翻譯＋語音合成</span>
   <h1>把中文變成<span class="grad">原住民族語</span>，<br>還會唸給你聽</h1>
-  <p>輸入一句中文，AI 立即翻譯成你選擇的族語方言，並以族人配音員的聲音朗讀出來，一鍵下載音檔，適合語言教學與自學。</p>
+  <p>貼上文章一鍵翻譯成族語，逐句編輯、重翻、試聽，匯出音檔與對照文字檔，還能把整篇串接成一個語音檔，適合語言教學與自學。</p>
   <a class="cta" href="#tool">立即試試 ↓</a>
 </section>
 
 <section class="features">
   <div class="feature"><div class="icon">🌏</div><h3>16 族完整支援</h3><p>阿美、泰雅、排灣、布農、太魯閣、賽德克⋯⋯共 42 種語別任你選擇。</p></div>
+  <div class="feature"><div class="icon">✏️</div><h3>逐句編輯重翻</h3><p>翻譯後每句都能改字、單句重翻、單句試聽，確認滿意再匯出。</p></div>
   <div class="feature"><div class="icon">🔊</div><h3>真人級語音合成</h3><p>每個語別都有對應的族人配音員聲音模型，發音道地自然。</p></div>
-  <div class="feature"><div class="icon">⬇️</div><h3>一鍵下載音檔</h3><p>合成結果自動以族語翻譯文字命名，存成 WAV 檔方便做教材。</p></div>
+  <div class="feature"><div class="icon">⬇️</div><h3>彈性匯出</h3><p>逐句音檔、對照文字檔、勾選匯出，或整篇串接成一個語音檔。</p></div>
 </section>
 
-<div class="tool-wrap" id="tool">
-  <div class="tool">
-    <h2>開始翻譯</h2>
-    <div class="selects">
-      <div class="field">
-        <label for="eth">族別</label>
-        <select id="eth"></select>
-      </div>
-      <div class="field">
-        <label for="lang">語別</label>
-        <select id="lang"><option>載入中…</option></select>
-      </div>
-      <div class="field">
-        <label for="spk">配音員</label>
-        <select id="spk"><option>載入中…</option></select>
-      </div>
+<div id="tool">
+<!-- ============================================================
+     族語隨身譯：嵌入版小工具（編輯版）
+     用法：把這整段（從這行註解到最後的 </script>）貼進你網站
+     編輯器的「自訂 HTML」區塊即可。樣式只作用在小工具內部，
+     不會影響你網站原本的版面。
+     服務由原住民族語言研究發展基金會 AI 實驗室提供。
+     ============================================================ -->
+<div id="zyfy-tool">
+  <h2 class="zyfy-title">中文 → 族語翻譯工作台</h2>
+
+  <div class="zyfy-selects">
+    <div class="zyfy-field">
+      <label for="zyfy-eth">族別</label>
+      <select id="zyfy-eth">
+        <option>阿美</option><option>泰雅</option><option>排灣</option><option>布農</option>
+        <option>卑南</option><option>魯凱</option><option>鄒</option><option>賽夏</option>
+        <option>雅美</option><option>邵</option><option>噶瑪蘭</option><option>太魯閣</option>
+        <option>撒奇萊雅</option><option>賽德克</option><option>拉阿魯哇</option><option>卡那卡那富</option>
+      </select>
     </div>
-    <textarea id="input" maxlength="2000" placeholder="輸入中文，例如：你好嗎？&#10;要批次翻譯的話，一行輸入一句。"></textarea>
-    <div class="btn-row">
-      <button class="run-btn" id="run">翻譯 ＋ 朗讀</button>
-      <button class="run-btn alt" id="batch">批次翻譯 ＋ 存文字檔</button>
+    <div class="zyfy-field">
+      <label for="zyfy-lang">語別</label>
+      <select id="zyfy-lang"><option>載入中…</option></select>
     </div>
-    <div class="status" id="status"></div>
-    <div class="result" id="result">
-      <div class="native" id="native"></div>
-      <audio id="player" controls></audio>
-      <button class="dl" id="download">⬇ 下載音檔</button>
+    <div class="zyfy-field">
+      <label for="zyfy-spk">配音員</label>
+      <select id="zyfy-spk"><option>載入中…</option></select>
     </div>
-    <div class="result" id="batch-result">
-      <div id="pairs"></div>
-      <button class="dl" id="download-txt">⬇ 下載對照文字檔</button>
+  </div>
+
+  <textarea id="zyfy-input" maxlength="4000" placeholder="貼上中文文章，一行一句。&#10;例如：&#10;早安&#10;謝謝你&#10;我們明天見"></textarea>
+
+  <button type="button" class="zyfy-run" id="zyfy-translate">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+    <span>翻譯全部句子 → 進入編輯區</span>
+  </button>
+
+  <div class="zyfy-status" id="zyfy-status"></div>
+
+  <div class="zyfy-editor" id="zyfy-editor">
+    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻這句、▶ 唸這句、⭳ 下載這句音檔、勾選＝納入「匯出勾選」。</div>
+    <div id="zyfy-rows"></div>
+
+    <label class="zyfy-textonly">
+      <input type="checkbox" id="zyfy-text-only"> 匯出時只存對照文字檔，不合成語音
+    </label>
+
+    <div class="zyfy-export-bar">
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-export-all" title="每句一個音檔＋對照文字檔">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+        <span>匯出全部</span>
+      </button>
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-export-sel" title="只匯出打勾的句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/><path d="M12 21H4V3h12v6"/></svg>
+        <span>匯出勾選</span>
+      </button>
+      <button type="button" class="zyfy-run zyfy-alt2" id="zyfy-export-merge" title="把全部句子的語音接成一個檔">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
+        <span>串接成一個語音檔</span>
+      </button>
     </div>
+  </div>
+
+  <div class="zyfy-credit">
+    翻譯與語音合成服務由
+    <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a> 提供
   </div>
 </div>
 
-<footer>
-  翻譯與語音合成服務由
-  <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a>
-  提供 ・ 本頁僅作介面串接示範
-</footer>
+<style>
+/* 所有規則都以 #zyfy-tool 開頭，只作用在小工具內部 */
+#zyfy-tool {
+  --zyfy-card: #1e293b;
+  --zyfy-card-2: #273449;
+  --zyfy-text: #e2e8f0;
+  --zyfy-muted: #94a3b8;
+  --zyfy-accent: #38bdf8;
+  --zyfy-accent-2: #818cf8;
+  --zyfy-ok: #34d399;
+  --zyfy-err: #f87171;
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 24px auto;
+  background: var(--zyfy-card);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  font-family: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: left;
+}
+#zyfy-tool * { box-sizing: border-box; margin: 0; padding: 0; }
+#zyfy-tool .zyfy-title { font-size: 22px; font-weight: 700; margin-bottom: 18px; color: var(--zyfy-text); }
+#zyfy-tool .zyfy-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+#zyfy-tool .zyfy-field label { display: block; font-size: 13px; color: var(--zyfy-muted); margin-bottom: 5px; }
+#zyfy-tool select, #zyfy-tool textarea, #zyfy-tool input[type="text"] {
+  width: 100%;
+  background: var(--zyfy-card-2);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+}
+#zyfy-tool select:focus, #zyfy-tool textarea:focus, #zyfy-tool input[type="text"]:focus { outline: 2px solid var(--zyfy-accent); border-color: transparent; }
+#zyfy-tool textarea { resize: vertical; min-height: 96px; margin-bottom: 14px; }
+
+#zyfy-tool .zyfy-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #0b1220;
+  background: linear-gradient(90deg, var(--zyfy-accent), var(--zyfy-accent-2));
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-run svg { width: 20px; height: 20px; flex: none; }
+#zyfy-tool .zyfy-run.zyfy-alt { background: linear-gradient(90deg, #34d399, #38bdf8); }
+#zyfy-tool .zyfy-run.zyfy-alt2 { background: linear-gradient(90deg, #f0abfc, #818cf8); }
+#zyfy-tool .zyfy-run:hover:not(:disabled) { filter: brightness(1.1); }
+#zyfy-tool .zyfy-run:disabled { opacity: .55; cursor: wait; }
+
+#zyfy-tool .zyfy-status { margin-top: 12px; font-size: 14px; color: var(--zyfy-accent); min-height: 21px; }
+#zyfy-tool .zyfy-status.zyfy-err { color: var(--zyfy-err); }
+
+#zyfy-tool .zyfy-editor { display: none; margin-top: 14px; }
+#zyfy-tool .zyfy-editor.zyfy-show { display: block; }
+#zyfy-tool .zyfy-editor-hint { font-size: 13px; color: var(--zyfy-muted); margin-bottom: 10px; }
+#zyfy-tool #zyfy-rows { max-height: 420px; overflow-y: auto; margin-bottom: 12px; }
+
+#zyfy-tool .zyfy-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148,163,184,.15);
+}
+#zyfy-tool .zyfy-row:last-child { border-bottom: 0; }
+#zyfy-tool .zyfy-row-side {
+  display: grid;
+  grid-template-columns: repeat(2, 32px);
+  grid-auto-rows: 32px;
+  gap: 6px;
+  align-content: start;
+  flex: none;
+}
+#zyfy-tool .zyfy-row-side input[type="checkbox"] {
+  width: 18px; height: 18px; margin: 7px; accent-color: var(--zyfy-ok); cursor: pointer;
+}
+#zyfy-tool .zyfy-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(148,163,184,.3);
+  border-radius: 8px;
+  background: var(--zyfy-card-2);
+  color: var(--zyfy-text);
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-icon svg { width: 16px; height: 16px; }
+#zyfy-tool .zyfy-icon:hover:not(:disabled) { border-color: var(--zyfy-accent); color: var(--zyfy-accent); }
+#zyfy-tool .zyfy-icon:disabled { opacity: .4; cursor: wait; }
+#zyfy-tool .zyfy-icon.zyfy-busy svg { animation: zyfy-spin 1s linear infinite; }
+@keyframes zyfy-spin { to { transform: rotate(360deg); } }
+#zyfy-tool .zyfy-row-main { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#zyfy-tool .zyfy-row-main .zyfy-tr { color: var(--zyfy-ok); font-weight: 700; }
+
+#zyfy-tool .zyfy-textonly { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--zyfy-muted); margin-bottom: 10px; cursor: pointer; }
+#zyfy-tool .zyfy-textonly input { width: 16px; height: 16px; accent-color: var(--zyfy-ok); }
+#zyfy-tool .zyfy-export-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+#zyfy-tool .zyfy-credit { margin-top: 16px; font-size: 12px; color: var(--zyfy-muted); text-align: center; }
+#zyfy-tool .zyfy-credit a { color: var(--zyfy-accent); text-decoration: none; }
+</style>
 
 <script>
 (function () {
   'use strict';
 
+  // 等元件出現才初始化：有些網站編輯器會把 script 移到頁首或延後渲染內容
+  let zyfyTries = 0;
+  function zyfyBoot() {
+    if (document.getElementById('zyfy-eth')) {
+      try { zyfyInit(); } catch (e) {
+        console.error('【族語隨身譯】初始化失敗:', e);
+        const st = document.getElementById('zyfy-status');
+        if (st) { st.textContent = '初始化失敗：' + e.message; st.className = 'zyfy-status zyfy-err'; }
+      }
+      return;
+    }
+    if (++zyfyTries < 40) setTimeout(zyfyBoot, 500);   // 最多等 20 秒
+    else console.error('【族語隨身譯】找不到小工具的 HTML 元件，可能被編輯器移除或改寫。');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', zyfyBoot);
+  } else {
+    zyfyBoot();
+  }
+
+  function zyfyInit() {
+
   const TRANSLATE_APP = 'https://ai-labs.ilrdf.org.tw/kari-seejiq-tnpusu-ai-hmjil';
   const TTS_APP       = 'https://ai-labs.ilrdf.org.tw/hnang-kari-ai-asi-sluhay';
-  const ETHNICITIES = ['阿美','泰雅','排灣','布農','卑南','魯凱','鄒','賽夏','雅美','邵',
-                       '噶瑪蘭','太魯閣','撒奇萊雅','賽德克','拉阿魯哇','卡那卡那富'];
+  const DEFAULT_LANG_LABEL = '阿美_南勢';
+  const DEFAULT_SPEAKER = '阿美_南勢_女聲';
 
-  const $ = (id) => document.getElementById(id);
+  const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>';
+  const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>';
+
+  const $ = (id) => document.getElementById('zyfy-' + id);
+  const toolEl = document.getElementById('zyfy-tool');
   const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
-  const inputBox = $('input'), runBtn = $('run'), statusEl = $('status');
-  const resultEl = $('result'), nativeEl = $('native'), player = $('player'), dlBtn = $('download');
-  const batchBtn = $('batch'), batchResultEl = $('batch-result'), pairsEl = $('pairs'), dlTxtBtn = $('download-txt');
+  const inputBox = $('input'), statusEl = $('status');
+  const translateBtn = $('translate'), editorEl = $('editor'), rowsEl = $('rows');
+  const textOnlyCb = $('text-only');
+  const exportAllBtn = $('export-all'), exportSelBtn = $('export-sel'), exportMergeBtn = $('export-merge');
 
-  let lastAudioBlob = null, lastFilename = 'tts_audio.wav';
+  const audioCache = new Map();   // 「配音員\u0000文字」-> wav Blob（唸過就不重新合成）
+  let sharedPlayer = null;
 
   function status(text, isErr) {
     statusEl.textContent = text;
-    statusEl.className = 'status' + (isErr ? ' err' : '');
+    statusEl.className = 'zyfy-status' + (isErr ? ' zyfy-err' : '');
   }
+
+  function setBusy(busy) {
+    toolEl.dataset.busy = busy ? '1' : '0';
+    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn]) b.disabled = busy;
+    for (const b of rowsEl.querySelectorAll('button')) b.disabled = busy;
+  }
+  const isBusy = () => toolEl.dataset.busy === '1';
 
   // ---------- Gradio API ----------
   const configCache = {};
@@ -280,7 +361,6 @@
     const fnIndex = await getFnIndex(appBase, apiName);
 
     // 順序很重要：先送 queue/join（伺服器會暫存結果），再開 SSE 監聽。
-    // 若先開監聽，伺服器會因該 session 沒有待處理任務而直接關閉連線。
     const res = await fetch(appBase + '/gradio_api/queue/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -308,20 +388,32 @@
   }
 
   // 翻譯前必須用同一 session 先呼叫 lambda_1 解鎖該族別的語別選項
-  async function translateText(ethnicity, langCode, text) {
-    const sess = newSession();
-    await gradioCall(TRANSLATE_APP, 'lambda_1', [ethnicity], sess);
+  async function translateOne(langCode, text, session) {
+    let sess = session;
+    if (!sess) {
+      sess = newSession();
+      await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
+    }
     const out = await gradioCall(TRANSLATE_APP, 'translate_1', [text, 'zho_Hant', langCode], sess);
     return (out[0] || '').trim();
   }
 
-  async function synthesize(ethnicity, speaker, text) {
-    const sess = newSession();
-    await gradioCall(TTS_APP, 'lambda', [ethnicity], sess);
+  // 取得語音（含快取）
+  async function getAudio(speaker, text, session) {
+    const key = speaker + '\u0000' + text;
+    if (audioCache.has(key)) return audioCache.get(key);
+    if (text.length > 300) throw new Error('文字超過 300 字元上限');
+    let sess = session;
+    if (!sess) {
+      sess = newSession();
+      await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);
+    }
     const out = await gradioCall(TTS_APP, 'default_speaker_tts', [speaker, text], sess);
     const file = out[0];
     if (!file || !file.url) throw new Error('合成結果沒有音檔');
-    return file.url;
+    const blob = await (await fetch(file.url)).blob();
+    audioCache.set(key, blob);
+    return blob;
   }
 
   function sanitizeFilename(name) {
@@ -330,10 +422,66 @@
     return name || 'tts_audio';
   }
 
-  // ---------- UI 邏輯 ----------
-  for (const e of ETHNICITIES) ethSel.add(new Option(e, e));
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
 
-  let langChoices = [];
+  function timeStamp() {
+    const d = new Date();
+    return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
+           '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  // ---------- WAV 串接（純前端，不需任何套件） ----------
+  function wavChunks(buf) {
+    const dv = new DataView(buf);
+    let off = 12, fmt = null, data = null;
+    while (off + 8 <= dv.byteLength) {
+      const id = String.fromCharCode(dv.getUint8(off), dv.getUint8(off + 1), dv.getUint8(off + 2), dv.getUint8(off + 3));
+      const size = dv.getUint32(off + 4, true);
+      if (id === 'fmt ') fmt = { channels: dv.getUint16(off + 10, true), rate: dv.getUint32(off + 12, true), bits: dv.getUint16(off + 22, true) };
+      if (id === 'data') { data = { offset: off + 8, size }; break; }
+      off += 8 + size + (size % 2);
+    }
+    if (!fmt || !data) throw new Error('WAV 格式解析失敗');
+    return { fmt, data };
+  }
+
+  async function mergeWavBlobs(blobs, gapSeconds) {
+    const bufs = [];
+    for (const b of blobs) bufs.push(await b.arrayBuffer());
+    const { fmt } = wavChunks(bufs[0]);
+    const bytesPerFrame = fmt.channels * fmt.bits / 8;
+    const gapBytes = Math.floor(fmt.rate * gapSeconds) * bytesPerFrame;
+
+    const parts = [];
+    let total = 0;
+    bufs.forEach((buf, i) => {
+      const { data } = wavChunks(buf);
+      if (i > 0 && gapBytes) { parts.push(new Uint8Array(gapBytes)); total += gapBytes; }
+      parts.push(new Uint8Array(buf, data.offset, data.size));
+      total += data.size;
+    });
+
+    const header = new ArrayBuffer(44);
+    const dv = new DataView(header);
+    const wstr = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    wstr(0, 'RIFF'); dv.setUint32(4, 36 + total, true); wstr(8, 'WAVE');
+    wstr(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
+    dv.setUint16(22, fmt.channels, true); dv.setUint32(24, fmt.rate, true);
+    dv.setUint32(28, fmt.rate * bytesPerFrame, true); dv.setUint16(32, bytesPerFrame, true); dv.setUint16(34, fmt.bits, true);
+    wstr(36, 'data'); dv.setUint32(40, total, true);
+    return new Blob([header, ...parts], { type: 'audio/wav' });
+  }
+
+  // ---------- 選項載入 ----------
   async function loadOptions() {
     status('載入語別與配音員…');
     langSel.innerHTML = spkSel.innerHTML = '';
@@ -342,13 +490,12 @@
         gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], newSession()),
         gradioCall(TTS_APP, 'lambda', [ethSel.value], newSession())
       ]);
-      langChoices = langData[0].choices;
-      for (const [label, code] of langChoices) langSel.add(new Option(label, code));
+      for (const [label, code] of langData[0].choices) langSel.add(new Option(label, code));
       for (const [label] of spkData[0].choices) spkSel.add(new Option(label, label));
       // 預設選擇：阿美_南勢／阿美_南勢_女聲（清單裡沒有就維持第一個）
-      const defLang = langChoices.find(c => c[0] === '阿美_南勢');
+      const defLang = langData[0].choices.find(c => c[0] === DEFAULT_LANG_LABEL);
       if (defLang) langSel.value = defLang[1];
-      if ([...spkSel.options].some(o => o.value === '阿美_南勢_女聲')) spkSel.value = '阿美_南勢_女聲';
+      if ([...spkSel.options].some(o => o.value === DEFAULT_SPEAKER)) spkSel.value = DEFAULT_SPEAKER;
       status('');
     } catch (err) {
       status('載入選項失敗：' + err.message, true);
@@ -357,121 +504,205 @@
   ethSel.addEventListener('change', loadOptions);
   loadOptions();
 
-  runBtn.addEventListener('click', async () => {
-    // 單句模式：多行時只取第一行（整批請用「批次翻譯」）
-    const text = (inputBox.value.split('\n').map(s => s.trim()).find(s => s) || '');
-    if (!text) { status('請先輸入中文', true); return; }
-    if (!langSel.value || !spkSel.value) { status('語別／配音員尚未載入完成', true); return; }
+  // ---------- 編輯區 ----------
+  function addRow(zh, tr) {
+    const row = document.createElement('div');
+    row.className = 'zyfy-row';
+    row.innerHTML =
+      '<div class="zyfy-row-side">' +
+        '<input type="checkbox" class="zyfy-check" title="勾選後可用「匯出勾選」單獨匯出">' +
+        '<button type="button" class="zyfy-icon zyfy-re" title="重新翻譯這一句">' + ICON_RETRY + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-play" title="唸這一句">' + ICON_PLAY + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-dl1" title="下載這一句的音檔">' + ICON_DL + '</button>' +
+      '</div>' +
+      '<div class="zyfy-row-main">' +
+        '<input type="text" class="zyfy-zh" placeholder="中文">' +
+        '<input type="text" class="zyfy-tr" placeholder="族語翻譯">' +
+      '</div>';
+    row.querySelector('.zyfy-zh').value = zh;
+    row.querySelector('.zyfy-tr').value = tr;
 
-    runBtn.disabled = true;
-    resultEl.classList.remove('show');
-    try {
-      status('翻譯中…');
-      const translated = await translateText(ethSel.value, langSel.value, text);
-      if (!translated) throw new Error('翻譯結果為空');
-      if (translated.length > 300) throw new Error('翻譯結果超過 300 字元上限');
-      nativeEl.textContent = translated;
+    // ↻ 重新翻譯這一句
+    row.querySelector('.zyfy-re').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const zhNow = row.querySelector('.zyfy-zh').value.trim();
+      if (!zhNow) { status('這一行的中文是空的', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        status('重新翻譯：' + zhNow);
+        const native = await translateOne(langSel.value, zhNow);
+        row.querySelector('.zyfy-tr').value = native;
+        status('重新翻譯完成：' + native);
+      } catch (err) {
+        status('重翻失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
 
-      status('語音合成中，約需 5～20 秒…');
-      const audioUrl = await synthesize(ethSel.value, spkSel.value, translated);
+    // ▶ 唸這一句
+    row.querySelector('.zyfy-play').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const tr2 = row.querySelector('.zyfy-tr').value.trim();
+      if (!tr2) { status('這一行還沒有翻譯文字', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        const cached = audioCache.has(spkSel.value + '\u0000' + tr2);
+        if (!cached) status('合成語音中（約 5～20 秒）：' + tr2);
+        const blob = await getAudio(spkSel.value, tr2);
+        if (sharedPlayer) { sharedPlayer.pause(); }
+        sharedPlayer = new Audio(URL.createObjectURL(blob));
+        await sharedPlayer.play();
+        status('▶ 播放：' + tr2);
+      } catch (err) {
+        status('試聽失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
 
-      status('取得音檔…');
-      lastAudioBlob = await (await fetch(audioUrl)).blob();
-      lastFilename = sanitizeFilename(translated) + '.wav';
-      player.src = URL.createObjectURL(lastAudioBlob);
+    // ⭳ 下載這一句
+    row.querySelector('.zyfy-dl1').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const tr2 = row.querySelector('.zyfy-tr').value.trim();
+      if (!tr2) { status('這一行還沒有翻譯文字', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        const cached = audioCache.has(spkSel.value + '\u0000' + tr2);
+        if (!cached) status('合成語音中（約 5～20 秒）：' + tr2);
+        const blob = await getAudio(spkSel.value, tr2);
+        downloadBlob(blob, sanitizeFilename(tr2) + '.wav');
+        status('已下載：' + sanitizeFilename(tr2) + '.wav');
+      } catch (err) {
+        status('下載失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
 
-      resultEl.classList.add('show');
-      status('完成！可播放試聽或下載。');
-    } catch (err) {
-      console.error(err);
-      status('失敗：' + err.message, true);
-    } finally {
-      runBtn.disabled = false;
-    }
-  });
-
-  dlBtn.addEventListener('click', () => {
-    if (!lastAudioBlob) return;
-    const url = URL.createObjectURL(lastAudioBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = lastFilename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  });
-
-  // ---------- 批次翻譯 ＋ 匯出對照文字檔 ----------
-  let lastTxtContent = '';
-
-  function downloadTextFile() {
-    if (!lastTxtContent) return;
-    // 加 BOM 讓 Windows 記事本正確以 UTF-8 開啟
-    const blob = new Blob(['\ufeff' + lastTxtContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const d = new Date();
-    const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
-                  '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
-    a.download = '翻譯對照_' + ethSel.value + '_' + stamp + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    rowsEl.appendChild(row);
   }
 
-  batchBtn.addEventListener('click', async () => {
+  function collectRows(selectedOnly) {
+    const items = [];
+    for (const row of rowsEl.querySelectorAll('.zyfy-row')) {
+      if (selectedOnly && !row.querySelector('.zyfy-check').checked) continue;
+      const zh = row.querySelector('.zyfy-zh').value.trim();
+      const tr = row.querySelector('.zyfy-tr').value.trim();
+      if (zh && tr) items.push({ zh, tr });
+    }
+    return items;
+  }
+
+  // ---------- 翻譯全部 ----------
+  translateBtn.addEventListener('click', async () => {
     const lines = inputBox.value.split('\n').map(s => s.trim()).filter(s => s);
-    if (!lines.length) { status('請先輸入中文（一行一句）', true); return; }
+    if (!lines.length) { status('請先貼上中文（一行一句）', true); return; }
     if (!langSel.value) { status('語別尚未載入完成', true); return; }
 
-    batchBtn.disabled = runBtn.disabled = true;
-    batchResultEl.classList.remove('show');
-    pairsEl.innerHTML = '';
-    const txtLines = [];
-
+    setBusy(true);
+    rowsEl.innerHTML = '';
+    editorEl.classList.remove('zyfy-show');
     try {
       // 整批共用同一個 session：解鎖一次族別即可
       const sess = newSession();
       await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
 
       for (let i = 0; i < lines.length; i++) {
-        status('批次翻譯中（' + (i + 1) + '/' + lines.length + '）：' + lines[i]);
-        const pairDiv = document.createElement('div');
-        pairDiv.className = 'pair';
+        status('翻譯中（' + (i + 1) + '/' + lines.length + '）：' + lines[i]);
+        let native = '';
         try {
-          const out = await gradioCall(TRANSLATE_APP, 'translate_1', [lines[i], 'zho_Hant', langSel.value], sess);
-          const native = (out[0] || '').trim();
-          if (!native) throw new Error('翻譯結果為空');
-          txtLines.push(lines[i], native);
-          pairDiv.innerHTML = '<div class="zh"></div><div class="tr"></div>';
-          pairDiv.querySelector('.zh').textContent = lines[i];
-          pairDiv.querySelector('.tr').textContent = native;
+          native = await translateOne(langSel.value, lines[i], sess);
         } catch (err) {
-          pairDiv.innerHTML = '<div class="zh"></div><div class="tr fail"></div>';
-          pairDiv.querySelector('.zh').textContent = lines[i];
-          pairDiv.querySelector('.tr').textContent = '（翻譯失敗：' + err.message + '）';
+          console.error(err);
         }
-        pairsEl.appendChild(pairDiv);
-        batchResultEl.classList.add('show');
+        addRow(lines[i], native);
+        editorEl.classList.add('zyfy-show');
       }
-
-      if (!txtLines.length) throw new Error('全部句子都翻譯失敗');
-      lastTxtContent = txtLines.join('\n') + '\n';
-      downloadTextFile();
-      status('批次完成！共 ' + (txtLines.length / 2) + ' 句，文字檔已下載（也可用下方按鈕重新下載）。');
+      status('翻譯完成，共 ' + lines.length + ' 句。可在編輯區修改文字、逐句重翻或試聽，再匯出。');
     } catch (err) {
       console.error(err);
       status('失敗：' + err.message, true);
     } finally {
-      batchBtn.disabled = runBtn.disabled = false;
+      setBusy(false);
     }
   });
 
-  dlTxtBtn.addEventListener('click', downloadTextFile);
+  // ---------- 匯出（全部／勾選） ----------
+  async function doExport(selectedOnly) {
+    const items = collectRows(selectedOnly);
+    if (!items.length) {
+      status(selectedOnly ? '沒有勾選任何句子' : '編輯區沒有可匯出的句子', true);
+      return;
+    }
+    const textOnly = textOnlyCb.checked;
+    setBusy(true);
+    try {
+      if (!textOnly) {
+        const sess = newSession();
+        await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);   // 解鎖配音員，一次即可
+        for (let i = 0; i < items.length; i++) {
+          status('合成中（' + (i + 1) + '/' + items.length + '）：' + items[i].tr);
+          const blob = await getAudio(spkSel.value, items[i].tr, sess);
+          downloadBlob(blob, sanitizeFilename(items[i].tr) + '.wav');
+          await new Promise(r => setTimeout(r, 400));  // 讓瀏覽器接受連續下載
+        }
+      }
+      // 一行中文、一行翻譯，依編輯區順序（含 BOM 讓 Windows 記事本正確開啟）
+      const txt = items.map(it => it.zh + '\n' + it.tr).join('\n') + '\n';
+      const name = '翻譯對照' + (selectedOnly ? '_勾選' : '') + '_' + ethSel.value + '_' + timeStamp() + '.txt';
+      downloadBlob(new Blob(['\ufeff' + txt], { type: 'text/plain;charset=utf-8' }), name);
+      status('匯出完成！共 ' + items.length + ' 句' + (textOnly ? '（僅文字檔）' : '（音檔＋文字檔）') + '。');
+    } catch (err) {
+      console.error(err);
+      status('匯出失敗：' + err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  exportAllBtn.addEventListener('click', () => doExport(false));
+  exportSelBtn.addEventListener('click', () => doExport(true));
+
+  // ---------- 串接成一個語音檔 ----------
+  exportMergeBtn.addEventListener('click', async () => {
+    const items = collectRows(false);
+    if (!items.length) { status('編輯區沒有可合成的句子', true); return; }
+    setBusy(true);
+    try {
+      const sess = newSession();
+      await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);
+      const blobs = [];
+      for (let i = 0; i < items.length; i++) {
+        status('合成中（' + (i + 1) + '/' + items.length + '）：' + items[i].tr);
+        blobs.push(await getAudio(spkSel.value, items[i].tr, sess));
+      }
+      status('串接中…');
+      const merged = await mergeWavBlobs(blobs, 0.4);
+      const name = '串接語音_' + sanitizeFilename(items[0].tr).slice(0, 20) + '_共' + items.length + '句.wav';
+      downloadBlob(merged, name);
+      status('串接完成！已下載 ' + name);
+    } catch (err) {
+      console.error(err);
+      status('串接失敗：' + err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  }  // zyfyInit 結束
 })();
 </script>
+
+</div>
+
+<footer>
+  翻譯與語音合成服務由
+  <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a>
+  提供 ・ 本頁僅作介面串接示範
+</footer>
+
 </body>
 </html>
