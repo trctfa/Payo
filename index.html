@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>族語隨身譯 — 中文一鍵翻譯成原住民族語，還會唸給你聽</title>
+<meta name="description" content="輸入中文，一鍵翻譯成 16 族原住民族語，並用 AI 語音合成朗讀、下載音檔。語料服務由原住民族語言研究發展基金會 AI 實驗室提供。">
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-2: #273449;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #818cf8;
+    --ok: #34d399;
+    --err: #f87171;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    text-align: center;
+    padding: 72px 20px 48px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(56,189,248,.25), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 10%, rgba(129,140,248,.18), transparent);
+  }
+  .hero .badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid rgba(56,189,248,.4);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    letter-spacing: .02em;
+    margin-bottom: 16px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: clamp(15px, 2.2vw, 18px);
+    max-width: 560px;
+    margin: 0 auto 28px;
+  }
+  .hero .cta {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    color: #0b1220;
+    font-weight: 700;
+    padding: 13px 34px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 17px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .hero .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(56,189,248,.35); }
+
+  /* ---------- Features ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 20px 8px;
+  }
+  .feature {
+    background: var(--card);
+    border: 1px solid rgba(148,163,184,.12);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .feature .icon { font-size: 26px; margin-bottom: 10px; }
+  .feature h3 { font-size: 17px; margin-bottom: 6px; }
+  .feature p { color: var(--muted); font-size: 14px; }
+
+  /* ---------- Tool ---------- */
+  .tool-wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 24px; }
+  .tool {
+    background: var(--card);
+    border: 1px solid rgba(148,163,184,.15);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  .tool h2 { font-size: 22px; margin-bottom: 18px; }
+  .selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  select, textarea {
+    width: 100%;
+    background: var(--card-2);
+    color: var(--text);
+    border: 1px solid rgba(148,163,184,.25);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  select:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  textarea { resize: vertical; min-height: 88px; margin-bottom: 14px; }
+  .run-btn {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: inherit;
+    color: #0b1220;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .run-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .run-btn:active:not(:disabled) { transform: scale(.99); }
+  .run-btn:disabled { opacity: .55; cursor: wait; }
+
+  .status { margin-top: 14px; font-size: 14px; color: var(--accent); min-height: 21px; }
+  .status.err { color: var(--err); }
+  .result {
+    display: none;
+    margin-top: 14px;
+    background: var(--card-2);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .result.show { display: block; }
+  .result .native {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ok);
+    word-break: break-word;
+    margin-bottom: 12px;
+  }
+  .result audio { width: 100%; margin-bottom: 12px; }
+  .result .dl {
+    display: inline-block;
+    background: var(--ok);
+    color: #06281c;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 9px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+    cursor: pointer;
+    border: 0;
+    font-family: inherit;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 36px 20px 44px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <span class="badge">16 族 42 種語別 ・ AI 翻譯＋語音合成</span>
+  <h1>把中文變成<span class="grad">原住民族語</span>，<br>還會唸給你聽</h1>
+  <p>輸入一句中文，AI 立即翻譯成你選擇的族語方言，並以族人配音員的聲音朗讀出來，一鍵下載音檔，適合語言教學與自學。</p>
+  <a class="cta" href="#tool">立即試試 ↓</a>
+</section>
+
+<section class="features">
+  <div class="feature"><div class="icon">🌏</div><h3>16 族完整支援</h3><p>阿美、泰雅、排灣、布農、太魯閣、賽德克⋯⋯共 42 種語別任你選擇。</p></div>
+  <div class="feature"><div class="icon">🔊</div><h3>真人級語音合成</h3><p>每個語別都有對應的族人配音員聲音模型，發音道地自然。</p></div>
+  <div class="feature"><div class="icon">⬇️</div><h3>一鍵下載音檔</h3><p>合成結果自動以族語翻譯文字命名，存成 WAV 檔方便做教材。</p></div>
+</section>
+
+<div class="tool-wrap" id="tool">
+  <div class="tool">
+    <h2>開始翻譯</h2>
+    <div class="selects">
+      <div class="field">
+        <label for="eth">族別</label>
+        <select id="eth"></select>
+      </div>
+      <div class="field">
+        <label for="lang">語別</label>
+        <select id="lang"><option>載入中…</option></select>
+      </div>
+      <div class="field">
+        <label for="spk">配音員</label>
+        <select id="spk"><option>載入中…</option></select>
+      </div>
+    </div>
+    <textarea id="input" maxlength="200" placeholder="輸入中文，例如：你好嗎？今天天氣真好。"></textarea>
+    <button class="run-btn" id="run">翻譯 ＋ 朗讀</button>
+    <div class="status" id="status"></div>
+    <div class="result" id="result">
+      <div class="native" id="native"></div>
+      <audio id="player" controls></audio>
+      <button class="dl" id="download">⬇ 下載音檔</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  翻譯與語音合成服務由
+  <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a>
+  提供 ・ 本頁僅作介面串接示範
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const TRANSLATE_APP = 'https://ai-labs.ilrdf.org.tw/kari-seejiq-tnpusu-ai-hmjil';
+  const TTS_APP       = 'https://ai-labs.ilrdf.org.tw/hnang-kari-ai-asi-sluhay';
+  const ETHNICITIES = ['阿美','泰雅','排灣','布農','卑南','魯凱','鄒','賽夏','雅美','邵',
+                       '噶瑪蘭','太魯閣','撒奇萊雅','賽德克','拉阿魯哇','卡那卡那富'];
+
+  const $ = (id) => document.getElementById(id);
+  const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
+  const inputBox = $('input'), runBtn = $('run'), statusEl = $('status');
+  const resultEl = $('result'), nativeEl = $('native'), player = $('player'), dlBtn = $('download');
+
+  let lastAudioBlob = null, lastFilename = 'tts_audio.wav';
+
+  function status(text, isErr) {
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (isErr ? ' err' : '');
+  }
+
+  // ---------- Gradio API ----------
+  const configCache = {};
+  async function getFnIndex(appBase, apiName) {
+    if (!configCache[appBase]) {
+      configCache[appBase] = await (await fetch(appBase + '/config')).json();
+    }
+    const dep = configCache[appBase].dependencies.find(d => d.api_name === apiName);
+    if (!dep) throw new Error('找不到 API：' + apiName);
+    return dep.id;
+  }
+
+  const newSession = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+  async function gradioCall(appBase, apiName, data, sessionHash) {
+    const fnIndex = await getFnIndex(appBase, apiName);
+
+    // 順序很重要：先送 queue/join（伺服器會暫存結果），再開 SSE 監聽。
+    // 若先開監聽，伺服器會因該 session 沒有待處理任務而直接關閉連線。
+    const res = await fetch(appBase + '/gradio_api/queue/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, fn_index: fnIndex, session_hash: sessionHash })
+    });
+    if (!res.ok) throw new Error('排隊失敗 HTTP ' + res.status);
+
+    return new Promise((resolve, reject) => {
+      const es = new EventSource(appBase + '/gradio_api/queue/data?session_hash=' + sessionHash);
+      const timer = setTimeout(() => fail(new Error(apiName + ' 等待逾時')), 180000);
+      function fail(err) { clearTimeout(timer); es.close(); reject(err); }
+
+      es.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg === 'process_completed') {
+          clearTimeout(timer);
+          es.close();
+          if (msg.success === false) reject(new Error(apiName + ' 後端處理失敗'));
+          else resolve(msg.output.data);
+        }
+      };
+      es.onerror = () => fail(new Error(apiName + ' 連線中斷'));
+    });
+  }
+
+  // 翻譯前必須用同一 session 先呼叫 lambda_1 解鎖該族別的語別選項
+  async function translateText(ethnicity, langCode, text) {
+    const sess = newSession();
+    await gradioCall(TRANSLATE_APP, 'lambda_1', [ethnicity], sess);
+    const out = await gradioCall(TRANSLATE_APP, 'translate_1', [text, 'zho_Hant', langCode], sess);
+    return (out[0] || '').trim();
+  }
+
+  async function synthesize(ethnicity, speaker, text) {
+    const sess = newSession();
+    await gradioCall(TTS_APP, 'lambda', [ethnicity], sess);
+    const out = await gradioCall(TTS_APP, 'default_speaker_tts', [speaker, text], sess);
+    const file = out[0];
+    if (!file || !file.url) throw new Error('合成結果沒有音檔');
+    return file.url;
+  }
+
+  function sanitizeFilename(name) {
+    name = (name || '').replace(/[\\\/:\*\?"<>\|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name.length > 60) name = name.slice(0, 60).trim();
+    return name || 'tts_audio';
+  }
+
+  // ---------- UI 邏輯 ----------
+  for (const e of ETHNICITIES) ethSel.add(new Option(e, e));
+
+  let langChoices = [];
+  async function loadOptions() {
+    status('載入語別與配音員…');
+    langSel.innerHTML = spkSel.innerHTML = '';
+    try {
+      const [langData, spkData] = await Promise.all([
+        gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], newSession()),
+        gradioCall(TTS_APP, 'lambda', [ethSel.value], newSession())
+      ]);
+      langChoices = langData[0].choices;
+      for (const [label, code] of langChoices) langSel.add(new Option(label, code));
+      for (const [label] of spkData[0].choices) spkSel.add(new Option(label, label));
+      status('');
+    } catch (err) {
+      status('載入選項失敗：' + err.message, true);
+    }
+  }
+  ethSel.addEventListener('change', loadOptions);
+  loadOptions();
+
+  runBtn.addEventListener('click', async () => {
+    const text = inputBox.value.trim();
+    if (!text) { status('請先輸入中文', true); return; }
+    if (!langSel.value || !spkSel.value) { status('語別／配音員尚未載入完成', true); return; }
+
+    runBtn.disabled = true;
+    resultEl.classList.remove('show');
+    try {
+      status('翻譯中…');
+      const translated = await translateText(ethSel.value, langSel.value, text);
+      if (!translated) throw new Error('翻譯結果為空');
+      if (translated.length > 300) throw new Error('翻譯結果超過 300 字元上限');
+      nativeEl.textContent = translated;
+
+      status('語音合成中，約需 5～20 秒…');
+      const audioUrl = await synthesize(ethSel.value, spkSel.value, translated);
+
+      status('取得音檔…');
+      lastAudioBlob = await (await fetch(audioUrl)).blob();
+      lastFilename = sanitizeFilename(translated) + '.wav';
+      player.src = URL.createObjectURL(lastAudioBlob);
+
+      resultEl.classList.add('show');
+      status('完成！可播放試聽或下載。');
+    } catch (err) {
+      console.error(err);
+      status('失敗：' + err.message, true);
+    } finally {
+      runBtn.disabled = false;
+    }
+  });
+
+  dlBtn.addEventListener('click', () => {
+    if (!lastAudioBlob) return;
+    const url = URL.createObjectURL(lastAudioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = lastFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+})();
+</script>
+</body>
+</html>
