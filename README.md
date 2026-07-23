@@ -8,6 +8,7 @@
 | 檔案 | 說明 |
 |---|---|
 | `index.html` | Landing page（單一 HTML 檔，零依賴），可直接部署到任何靜態網站空間 |
+| `embed.html` | 嵌入版小工具：貼進現有網頁的「自訂 HTML」區塊即可，樣式只作用在小工具內部，不影響原網站版面 |
 | `tools/ilrdf_tts.py` | 命令列批次工具：`python3 ilrdf_tts.py --ethnicity 太魯閣 --file sentences.txt` |
 | `tools/ilrdf_tts_gui.py` | 桌面 GUI 版（tkinter，Python 內建），適合批次做教材音檔 |
 
@@ -23,9 +24,10 @@
 
 ## 部署 Landing Page
 
-`index.html` 沒有任何後端與相依套件，選一種方式即可：
+兩個檔案都沒有後端與相依套件，依你的網站後台選一種方式：
 
-- **放進現有網站**：把 `index.html` 上傳到你的網站空間（可改名，例如 `translate.html`）。
+- **後台可上傳檔案／建立獨立頁面**：把 `index.html` 上傳到你的網站空間（可改名，例如 `translate.html`）。
+- **後台只能在現有頁面貼 HTML**（WordPress 自訂 HTML 區塊等）：改貼 `embed.html` 的完整內容。`index.html` 含完整網頁結構與全域樣式，貼進現有頁面會弄亂原版面；`embed.html` 的樣式全部限定在小工具內部。
 - **GitHub Pages**：本 repo 開啟 Pages（Settings → Pages → Deploy from branch），即可獲得公開網址。
 - **Netlify / Cloudflare Pages**：把檔案拖進去即可。
 

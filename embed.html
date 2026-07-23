@@ -1,0 +1,355 @@
+<!-- ============================================================
+     族語隨身譯：嵌入版小工具
+     用法：把這整段（從這行註解到最後的 </script>）貼進你網站
+     編輯器的「自訂 HTML」區塊即可。樣式只作用在小工具內部，
+     不會影響你網站原本的版面。
+     服務由原住民族語言研究發展基金會 AI 實驗室提供。
+     ============================================================ -->
+<div id="zyfy-tool">
+  <h2 class="zyfy-title">中文 → 族語翻譯＋朗讀</h2>
+  <div class="zyfy-selects">
+    <div class="zyfy-field">
+      <label for="zyfy-eth">族別</label>
+      <select id="zyfy-eth"></select>
+    </div>
+    <div class="zyfy-field">
+      <label for="zyfy-lang">語別</label>
+      <select id="zyfy-lang"><option>載入中…</option></select>
+    </div>
+    <div class="zyfy-field">
+      <label for="zyfy-spk">配音員</label>
+      <select id="zyfy-spk"><option>載入中…</option></select>
+    </div>
+  </div>
+  <textarea id="zyfy-input" maxlength="2000" placeholder="輸入中文，例如：你好嗎？&#10;要批次翻譯的話，一行輸入一句。"></textarea>
+  <div class="zyfy-btn-row">
+    <button type="button" class="zyfy-run" id="zyfy-run">翻譯 ＋ 朗讀</button>
+    <button type="button" class="zyfy-run zyfy-alt" id="zyfy-batch">批次翻譯 ＋ 存文字檔</button>
+  </div>
+  <div class="zyfy-status" id="zyfy-status"></div>
+  <div class="zyfy-result" id="zyfy-result">
+    <div class="zyfy-native" id="zyfy-native"></div>
+    <audio id="zyfy-player" controls></audio>
+    <button type="button" class="zyfy-dl" id="zyfy-download">⬇ 下載音檔</button>
+  </div>
+  <div class="zyfy-result" id="zyfy-batch-result">
+    <div id="zyfy-pairs"></div>
+    <button type="button" class="zyfy-dl" id="zyfy-download-txt">⬇ 下載對照文字檔</button>
+  </div>
+  <div class="zyfy-credit">
+    翻譯與語音合成服務由
+    <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a> 提供
+  </div>
+</div>
+
+<style>
+/* 所有規則都以 #zyfy-tool 開頭，只作用在小工具內部 */
+#zyfy-tool {
+  --zyfy-card: #1e293b;
+  --zyfy-card-2: #273449;
+  --zyfy-text: #e2e8f0;
+  --zyfy-muted: #94a3b8;
+  --zyfy-accent: #38bdf8;
+  --zyfy-accent-2: #818cf8;
+  --zyfy-ok: #34d399;
+  --zyfy-err: #f87171;
+  box-sizing: border-box;
+  max-width: 680px;
+  margin: 24px auto;
+  background: var(--zyfy-card);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  font-family: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: left;
+}
+#zyfy-tool * { box-sizing: border-box; margin: 0; padding: 0; }
+#zyfy-tool .zyfy-title { font-size: 22px; font-weight: 700; margin-bottom: 18px; color: var(--zyfy-text); }
+#zyfy-tool .zyfy-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+#zyfy-tool .zyfy-field label { display: block; font-size: 13px; color: var(--zyfy-muted); margin-bottom: 5px; }
+#zyfy-tool select, #zyfy-tool textarea {
+  width: 100%;
+  background: var(--zyfy-card-2);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+}
+#zyfy-tool select:focus, #zyfy-tool textarea:focus { outline: 2px solid var(--zyfy-accent); border-color: transparent; }
+#zyfy-tool textarea { resize: vertical; min-height: 88px; margin-bottom: 14px; }
+#zyfy-tool .zyfy-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+#zyfy-tool .zyfy-run {
+  flex: 1;
+  min-width: 200px;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #0b1220;
+  background: linear-gradient(90deg, var(--zyfy-accent), var(--zyfy-accent-2));
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-run.zyfy-alt { background: linear-gradient(90deg, #34d399, #38bdf8); }
+#zyfy-tool .zyfy-run:hover:not(:disabled) { filter: brightness(1.1); }
+#zyfy-tool .zyfy-run:disabled { opacity: .55; cursor: wait; }
+#zyfy-tool .zyfy-status { margin-top: 14px; font-size: 14px; color: var(--zyfy-accent); min-height: 21px; }
+#zyfy-tool .zyfy-status.zyfy-err { color: var(--zyfy-err); }
+#zyfy-tool .zyfy-result { display: none; margin-top: 14px; background: var(--zyfy-card-2); border-radius: 12px; padding: 16px; }
+#zyfy-tool .zyfy-result.zyfy-show { display: block; }
+#zyfy-tool .zyfy-native { font-size: 20px; font-weight: 700; color: var(--zyfy-ok); word-break: break-word; margin-bottom: 12px; }
+#zyfy-tool audio { width: 100%; margin-bottom: 12px; }
+#zyfy-tool .zyfy-dl {
+  display: inline-block;
+  background: var(--zyfy-ok);
+  color: #06281c;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 9px 22px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+#zyfy-tool .zyfy-pair { padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.15); }
+#zyfy-tool .zyfy-pair:last-of-type { border-bottom: 0; }
+#zyfy-tool .zyfy-pair .zyfy-zh { color: var(--zyfy-muted); font-size: 14px; }
+#zyfy-tool .zyfy-pair .zyfy-tr { color: var(--zyfy-ok); font-size: 17px; font-weight: 700; word-break: break-word; }
+#zyfy-tool .zyfy-pair .zyfy-tr.zyfy-fail { color: var(--zyfy-err); font-weight: 400; }
+#zyfy-tool #zyfy-pairs { margin-bottom: 12px; max-height: 320px; overflow-y: auto; }
+#zyfy-tool .zyfy-credit { margin-top: 16px; font-size: 12px; color: var(--zyfy-muted); text-align: center; }
+#zyfy-tool .zyfy-credit a { color: var(--zyfy-accent); text-decoration: none; }
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  const TRANSLATE_APP = 'https://ai-labs.ilrdf.org.tw/kari-seejiq-tnpusu-ai-hmjil';
+  const TTS_APP       = 'https://ai-labs.ilrdf.org.tw/hnang-kari-ai-asi-sluhay';
+  const ETHNICITIES = ['阿美','泰雅','排灣','布農','卑南','魯凱','鄒','賽夏','雅美','邵',
+                       '噶瑪蘭','太魯閣','撒奇萊雅','賽德克','拉阿魯哇','卡那卡那富'];
+
+  const $ = (id) => document.getElementById('zyfy-' + id);
+  const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
+  const inputBox = $('input'), runBtn = $('run'), statusEl = $('status');
+  const resultEl = $('result'), nativeEl = $('native'), player = $('player'), dlBtn = $('download');
+  const batchBtn = $('batch'), batchResultEl = $('batch-result'), pairsEl = $('pairs'), dlTxtBtn = $('download-txt');
+
+  let lastAudioBlob = null, lastFilename = 'tts_audio.wav';
+
+  function status(text, isErr) {
+    statusEl.textContent = text;
+    statusEl.className = 'zyfy-status' + (isErr ? ' zyfy-err' : '');
+  }
+
+  // ---------- Gradio API ----------
+  const configCache = {};
+  async function getFnIndex(appBase, apiName) {
+    if (!configCache[appBase]) {
+      configCache[appBase] = await (await fetch(appBase + '/config')).json();
+    }
+    const dep = configCache[appBase].dependencies.find(d => d.api_name === apiName);
+    if (!dep) throw new Error('找不到 API：' + apiName);
+    return dep.id;
+  }
+
+  const newSession = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+  async function gradioCall(appBase, apiName, data, sessionHash) {
+    const fnIndex = await getFnIndex(appBase, apiName);
+
+    // 順序很重要：先送 queue/join（伺服器會暫存結果），再開 SSE 監聽。
+    const res = await fetch(appBase + '/gradio_api/queue/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, fn_index: fnIndex, session_hash: sessionHash })
+    });
+    if (!res.ok) throw new Error('排隊失敗 HTTP ' + res.status);
+
+    return new Promise((resolve, reject) => {
+      const es = new EventSource(appBase + '/gradio_api/queue/data?session_hash=' + sessionHash);
+      const timer = setTimeout(() => fail(new Error(apiName + ' 等待逾時')), 180000);
+      function fail(err) { clearTimeout(timer); es.close(); reject(err); }
+
+      es.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg === 'process_completed') {
+          clearTimeout(timer);
+          es.close();
+          if (msg.success === false) reject(new Error(apiName + ' 後端處理失敗'));
+          else resolve(msg.output.data);
+        }
+      };
+      es.onerror = () => fail(new Error(apiName + ' 連線中斷'));
+    });
+  }
+
+  // 翻譯前必須用同一 session 先呼叫 lambda_1 解鎖該族別的語別選項
+  async function translateText(ethnicity, langCode, text) {
+    const sess = newSession();
+    await gradioCall(TRANSLATE_APP, 'lambda_1', [ethnicity], sess);
+    const out = await gradioCall(TRANSLATE_APP, 'translate_1', [text, 'zho_Hant', langCode], sess);
+    return (out[0] || '').trim();
+  }
+
+  async function synthesize(ethnicity, speaker, text) {
+    const sess = newSession();
+    await gradioCall(TTS_APP, 'lambda', [ethnicity], sess);
+    const out = await gradioCall(TTS_APP, 'default_speaker_tts', [speaker, text], sess);
+    const file = out[0];
+    if (!file || !file.url) throw new Error('合成結果沒有音檔');
+    return file.url;
+  }
+
+  function sanitizeFilename(name) {
+    name = (name || '').replace(/[\\\/:\*\?"<>\|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name.length > 60) name = name.slice(0, 60).trim();
+    return name || 'tts_audio';
+  }
+
+  // ---------- UI 邏輯 ----------
+  for (const e of ETHNICITIES) ethSel.add(new Option(e, e));
+
+  async function loadOptions() {
+    status('載入語別與配音員…');
+    langSel.innerHTML = spkSel.innerHTML = '';
+    try {
+      const [langData, spkData] = await Promise.all([
+        gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], newSession()),
+        gradioCall(TTS_APP, 'lambda', [ethSel.value], newSession())
+      ]);
+      for (const [label, code] of langData[0].choices) langSel.add(new Option(label, code));
+      for (const [label] of spkData[0].choices) spkSel.add(new Option(label, label));
+      status('');
+    } catch (err) {
+      status('載入選項失敗：' + err.message, true);
+    }
+  }
+  ethSel.addEventListener('change', loadOptions);
+  loadOptions();
+
+  runBtn.addEventListener('click', async () => {
+    // 單句模式：多行時只取第一行（整批請用「批次翻譯」）
+    const text = (inputBox.value.split('\n').map(s => s.trim()).find(s => s) || '');
+    if (!text) { status('請先輸入中文', true); return; }
+    if (!langSel.value || !spkSel.value) { status('語別／配音員尚未載入完成', true); return; }
+
+    runBtn.disabled = true;
+    resultEl.classList.remove('zyfy-show');
+    try {
+      status('翻譯中…');
+      const translated = await translateText(ethSel.value, langSel.value, text);
+      if (!translated) throw new Error('翻譯結果為空');
+      if (translated.length > 300) throw new Error('翻譯結果超過 300 字元上限');
+      nativeEl.textContent = translated;
+
+      status('語音合成中，約需 5～20 秒…');
+      const audioUrl = await synthesize(ethSel.value, spkSel.value, translated);
+
+      status('取得音檔…');
+      lastAudioBlob = await (await fetch(audioUrl)).blob();
+      lastFilename = sanitizeFilename(translated) + '.wav';
+      player.src = URL.createObjectURL(lastAudioBlob);
+
+      resultEl.classList.add('zyfy-show');
+      status('完成！可播放試聽或下載。');
+    } catch (err) {
+      console.error(err);
+      status('失敗：' + err.message, true);
+    } finally {
+      runBtn.disabled = false;
+    }
+  });
+
+  dlBtn.addEventListener('click', () => {
+    if (!lastAudioBlob) return;
+    const url = URL.createObjectURL(lastAudioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = lastFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+
+  // ---------- 批次翻譯 ＋ 匯出對照文字檔 ----------
+  let lastTxtContent = '';
+
+  function downloadTextFile() {
+    if (!lastTxtContent) return;
+    // 加 BOM 讓 Windows 記事本正確以 UTF-8 開啟
+    const blob = new Blob(['\ufeff' + lastTxtContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
+                  '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+    a.download = '翻譯對照_' + ethSel.value + '_' + stamp + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  batchBtn.addEventListener('click', async () => {
+    const lines = inputBox.value.split('\n').map(s => s.trim()).filter(s => s);
+    if (!lines.length) { status('請先輸入中文（一行一句）', true); return; }
+    if (!langSel.value) { status('語別尚未載入完成', true); return; }
+
+    batchBtn.disabled = runBtn.disabled = true;
+    batchResultEl.classList.remove('zyfy-show');
+    pairsEl.innerHTML = '';
+    const txtLines = [];
+
+    try {
+      // 整批共用同一個 session：解鎖一次族別即可
+      const sess = newSession();
+      await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
+
+      for (let i = 0; i < lines.length; i++) {
+        status('批次翻譯中（' + (i + 1) + '/' + lines.length + '）：' + lines[i]);
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'zyfy-pair';
+        try {
+          const out = await gradioCall(TRANSLATE_APP, 'translate_1', [lines[i], 'zho_Hant', langSel.value], sess);
+          const native = (out[0] || '').trim();
+          if (!native) throw new Error('翻譯結果為空');
+          txtLines.push(lines[i], native);
+          pairDiv.innerHTML = '<div class="zyfy-zh"></div><div class="zyfy-tr"></div>';
+          pairDiv.querySelector('.zyfy-zh').textContent = lines[i];
+          pairDiv.querySelector('.zyfy-tr').textContent = native;
+        } catch (err) {
+          pairDiv.innerHTML = '<div class="zyfy-zh"></div><div class="zyfy-tr zyfy-fail"></div>';
+          pairDiv.querySelector('.zyfy-zh').textContent = lines[i];
+          pairDiv.querySelector('.zyfy-tr').textContent = '（翻譯失敗：' + err.message + '）';
+        }
+        pairsEl.appendChild(pairDiv);
+        batchResultEl.classList.add('zyfy-show');
+      }
+
+      if (!txtLines.length) throw new Error('全部句子都翻譯失敗');
+      lastTxtContent = txtLines.join('\n') + '\n';
+      downloadTextFile();
+      status('批次完成！共 ' + (txtLines.length / 2) + ' 句，文字檔已下載（也可用下方按鈕重新下載）。');
+    } catch (err) {
+      console.error(err);
+      status('失敗：' + err.message, true);
+    } finally {
+      batchBtn.disabled = runBtn.disabled = false;
+    }
+  });
+
+  dlTxtBtn.addEventListener('click', downloadTextFile);
+})();
+</script>
