@@ -10,7 +10,12 @@
   <div class="zyfy-selects">
     <div class="zyfy-field">
       <label for="zyfy-eth">族別</label>
-      <select id="zyfy-eth"></select>
+      <select id="zyfy-eth">
+        <option>阿美</option><option>泰雅</option><option>排灣</option><option>布農</option>
+        <option>卑南</option><option>魯凱</option><option>鄒</option><option>賽夏</option>
+        <option>雅美</option><option>邵</option><option>噶瑪蘭</option><option>太魯閣</option>
+        <option>撒奇萊雅</option><option>賽德克</option><option>拉阿魯哇</option><option>卡那卡那富</option>
+      </select>
     </div>
     <div class="zyfy-field">
       <label for="zyfy-lang">語別</label>
@@ -132,10 +137,30 @@
 (function () {
   'use strict';
 
+  // 等元件出現才初始化：有些網站編輯器會把 script 移到頁首或延後渲染內容
+  let zyfyTries = 0;
+  function zyfyBoot() {
+    if (document.getElementById('zyfy-eth')) {
+      try { zyfyInit(); } catch (e) {
+        console.error('【族語隨身譯】初始化失敗:', e);
+        const st = document.getElementById('zyfy-status');
+        if (st) { st.textContent = '初始化失敗：' + e.message; st.className = 'zyfy-status zyfy-err'; }
+      }
+      return;
+    }
+    if (++zyfyTries < 40) setTimeout(zyfyBoot, 500);   // 最多等 20 秒
+    else console.error('【族語隨身譯】找不到小工具的 HTML 元件，可能被編輯器移除或改寫。');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', zyfyBoot);
+  } else {
+    zyfyBoot();
+  }
+
+  function zyfyInit() {
+
   const TRANSLATE_APP = 'https://ai-labs.ilrdf.org.tw/kari-seejiq-tnpusu-ai-hmjil';
   const TTS_APP       = 'https://ai-labs.ilrdf.org.tw/hnang-kari-ai-asi-sluhay';
-  const ETHNICITIES = ['阿美','泰雅','排灣','布農','卑南','魯凱','鄒','賽夏','雅美','邵',
-                       '噶瑪蘭','太魯閣','撒奇萊雅','賽德克','拉阿魯哇','卡那卡那富'];
 
   const $ = (id) => document.getElementById('zyfy-' + id);
   const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
@@ -217,7 +242,7 @@
   }
 
   // ---------- UI 邏輯 ----------
-  for (const e of ETHNICITIES) ethSel.add(new Option(e, e));
+  // 族別選項已寫在 HTML 內（就算 JS 較晚啟動，畫面也不會是空的）
 
   async function loadOptions() {
     status('載入語別與配音員…');
@@ -351,5 +376,7 @@
   });
 
   dlTxtBtn.addEventListener('click', downloadTextFile);
+
+  }  // zyfyInit 結束
 })();
 </script>
