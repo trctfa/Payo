@@ -209,6 +209,14 @@ class App:
         ttk.Checkbutton(frm, text="匯出時只存對照文字檔，不合成語音",
                         variable=self.text_only_var).pack(anchor="w", **pad)
 
+        row_sel = ttk.Frame(frm); row_sel.pack(fill="x", **pad)
+        self.select_all_btn = ttk.Button(row_sel, text="全選", command=lambda: self.set_all_checked(True))
+        self.select_all_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.clear_sel_btn = ttk.Button(row_sel, text="清除勾選", command=lambda: self.set_all_checked(False))
+        self.clear_sel_btn.pack(side="left", fill="x", expand=True, padx=4)
+        self.delete_sel_btn = ttk.Button(row_sel, text="刪除勾選句子", command=self.delete_selected)
+        self.delete_sel_btn.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
         row3 = ttk.Frame(frm); row3.pack(fill="x", **pad)
         self.export_all_btn = ttk.Button(row3, text="匯出全部（語音＋文字檔）",
                                          command=lambda: self.export(selected_only=False))
@@ -249,6 +257,9 @@ class App:
         self.export_merge_btn.configure(state=state)
         self.save_proj_btn.configure(state=state)
         self.open_proj_btn.configure(state=state)
+        self.select_all_btn.configure(state=state)
+        self.clear_sel_btn.configure(state=state)
+        self.delete_sel_btn.configure(state=state)
         for r in self.rows:
             r["btn"].configure(state=state)
             r["play"].configure(state=state)
@@ -555,6 +566,35 @@ class App:
             finally:
                 self.msg_q.put(("done", None))
         threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 勾選／批次刪除 ----------
+    def set_all_checked(self, value):
+        if not self.rows:
+            return
+        for r in self.rows:
+            r["var"].set(value)
+        self.log("已" + ("全選" if value else "清除勾選") + f" {len(self.rows)} 句")
+
+    def delete_selected(self):
+        if self.running:
+            return
+        if not self.rows:
+            messagebox.showwarning("提示", "編輯區還沒有句子")
+            return
+        kept = []
+        removed = 0
+        for r in self.rows:
+            if r["var"].get():
+                removed += 1
+            else:
+                kept.append((r["zh"].get(), r["tr"].get()))
+        if removed == 0:
+            messagebox.showwarning("提示", "請先勾選要刪除的句子")
+            return
+        if not messagebox.askyesno("確認刪除", f"確定刪除勾選的 {removed} 句嗎？"):
+            return
+        self.build_rows(kept)
+        self.log(f"✓ 已刪除 {removed} 句，剩餘 {len(kept)} 句")
 
     # ---------- 專案儲存／開啟（與網頁版通用的 JSON 格式） ----------
     def save_project(self):

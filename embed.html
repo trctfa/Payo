@@ -50,8 +50,23 @@
   <input type="file" id="zyfy-proj-file" accept=".json,application/json" style="display:none">
 
   <div class="zyfy-editor" id="zyfy-editor">
-    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻這句、▶ 唸這句、⭳ 下載這句音檔、勾選＝納入「匯出勾選」。</div>
+    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻、▶ 唸、⭳ 下載、✕ 刪除；勾選後可「匯出勾選」或「刪除勾選」。</div>
     <div id="zyfy-rows"></div>
+
+    <div class="zyfy-sel-bar">
+      <button type="button" class="zyfy-ghost" id="zyfy-select-all" title="勾選全部句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>全選</span>
+      </button>
+      <button type="button" class="zyfy-ghost" id="zyfy-clear-sel" title="取消全部勾選">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/></svg>
+        <span>清除勾選</span>
+      </button>
+      <button type="button" class="zyfy-ghost zyfy-danger" id="zyfy-delete-sel" title="刪除打勾的句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        <span>刪除勾選</span>
+      </button>
+    </div>
 
     <label class="zyfy-textonly">
       <input type="checkbox" id="zyfy-text-only"> 匯出時只存對照文字檔，不合成語音
@@ -202,6 +217,9 @@
 #zyfy-tool .zyfy-ghost svg { width: 17px; height: 17px; }
 #zyfy-tool .zyfy-ghost:hover:not(:disabled) { border-color: var(--zyfy-accent); color: var(--zyfy-accent); }
 #zyfy-tool .zyfy-ghost:disabled { opacity: .5; cursor: wait; }
+#zyfy-tool .zyfy-ghost.zyfy-danger:hover:not(:disabled) { border-color: var(--zyfy-err); color: var(--zyfy-err); }
+#zyfy-tool .zyfy-sel-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+#zyfy-tool .zyfy-icon.zyfy-del:hover:not(:disabled) { border-color: var(--zyfy-err); color: var(--zyfy-err); }
 #zyfy-tool .zyfy-textonly { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--zyfy-muted); margin-bottom: 10px; cursor: pointer; }
 #zyfy-tool .zyfy-textonly input { width: 16px; height: 16px; accent-color: var(--zyfy-ok); }
 #zyfy-tool .zyfy-export-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
@@ -243,6 +261,7 @@
   const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>';
   const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
 
   const $ = (id) => document.getElementById('zyfy-' + id);
   const toolEl = document.getElementById('zyfy-tool');
@@ -252,6 +271,7 @@
   const textOnlyCb = $('text-only');
   const exportAllBtn = $('export-all'), exportSelBtn = $('export-sel'), exportMergeBtn = $('export-merge');
   const saveProjBtn = $('save-proj'), openProjBtn = $('open-proj'), projFileInput = $('proj-file');
+  const selectAllBtn = $('select-all'), clearSelBtn = $('clear-sel'), deleteSelBtn = $('delete-sel');
 
   const audioCache = new Map();   // 「配音員\u0000文字」-> wav Blob（唸過就不重新合成）
   const AUTO_KEY = 'zyfy_autosave_v1';
@@ -266,7 +286,8 @@
 
   function setBusy(busy) {
     toolEl.dataset.busy = busy ? '1' : '0';
-    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn, saveProjBtn, openProjBtn]) {
+    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn,
+                     saveProjBtn, openProjBtn, selectAllBtn, clearSelBtn, deleteSelBtn]) {
       if (b) b.disabled = busy;
     }
     for (const b of rowsEl.querySelectorAll('button')) b.disabled = busy;
@@ -449,10 +470,11 @@
     row.className = 'zyfy-row';
     row.innerHTML =
       '<div class="zyfy-row-side">' +
-        '<input type="checkbox" class="zyfy-check" title="勾選後可用「匯出勾選」單獨匯出">' +
+        '<input type="checkbox" class="zyfy-check" title="勾選後可匯出勾選或刪除勾選">' +
         '<button type="button" class="zyfy-icon zyfy-re" title="重新翻譯這一句">' + ICON_RETRY + '</button>' +
         '<button type="button" class="zyfy-icon zyfy-play" title="唸這一句">' + ICON_PLAY + '</button>' +
         '<button type="button" class="zyfy-icon zyfy-dl1" title="下載這一句的音檔">' + ICON_DL + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-del" title="刪除這一句">' + ICON_DEL + '</button>' +
       '</div>' +
       '<div class="zyfy-row-main">' +
         '<input type="text" class="zyfy-zh" placeholder="中文">' +
@@ -524,6 +546,15 @@
       } finally {
         btn.disabled = false; btn.classList.remove('zyfy-busy');
       }
+    });
+
+    // ✕ 刪除這一句
+    row.querySelector('.zyfy-del').addEventListener('click', () => {
+      if (isBusy()) return;
+      row.remove();
+      if (!rowsEl.querySelector('.zyfy-row')) editorEl.classList.remove('zyfy-show');
+      status('已刪除 1 句，剩餘 ' + rowsEl.querySelectorAll('.zyfy-row').length + ' 句');
+      scheduleAutosave();
     });
 
     rowsEl.appendChild(row);
@@ -736,6 +767,32 @@
   }
   exportAllBtn.addEventListener('click', () => doExport(false));
   exportSelBtn.addEventListener('click', () => doExport(true));
+
+  // ---------- 全選／清除勾選／刪除勾選 ----------
+  selectAllBtn.addEventListener('click', () => {
+    const rows = rowsEl.querySelectorAll('.zyfy-row');
+    if (!rows.length) { status('編輯區還沒有句子', true); return; }
+    for (const row of rows) row.querySelector('.zyfy-check').checked = true;
+    status('已全選 ' + rows.length + ' 句');
+    scheduleAutosave();
+  });
+  clearSelBtn.addEventListener('click', () => {
+    const rows = rowsEl.querySelectorAll('.zyfy-row');
+    for (const row of rows) row.querySelector('.zyfy-check').checked = false;
+    status(rows.length ? '已清除勾選' : '編輯區還沒有句子');
+    scheduleAutosave();
+  });
+  deleteSelBtn.addEventListener('click', () => {
+    if (isBusy()) return;
+    const checked = [...rowsEl.querySelectorAll('.zyfy-row')].filter(r => r.querySelector('.zyfy-check').checked);
+    if (!checked.length) { status('請先勾選要刪除的句子', true); return; }
+    if (!confirm('確定刪除勾選的 ' + checked.length + ' 句嗎？')) return;
+    for (const row of checked) row.remove();
+    const left = rowsEl.querySelectorAll('.zyfy-row').length;
+    if (!left) editorEl.classList.remove('zyfy-show');
+    status('✓ 已刪除 ' + checked.length + ' 句，剩餘 ' + left + ' 句');
+    scheduleAutosave();
+  });
 
   // ---------- 串接成一個語音檔 ----------
   exportMergeBtn.addEventListener('click', async () => {
