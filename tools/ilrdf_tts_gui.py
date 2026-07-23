@@ -147,6 +147,7 @@ class App:
         self.rows = []           # 編輯區每行：{'var','zh','tr','btn','play','frame'}
         self.audio_cache = {}    # (配音員, 文字) -> wav bytes，避免重複合成
         self.tmpdir = Path(tempfile.mkdtemp(prefix="ilrdf_tts_"))
+        self.pending_project = None  # 開啟專案時暫存，等選項載入完再套用
 
         pad = {"padx": 8, "pady": 4}
         frm = ttk.Frame(root)
@@ -220,6 +221,12 @@ class App:
             frm, text="串接全部句子 → 匯出成一個語音檔", command=self.export_merged)
         self.export_merge_btn.pack(fill="x", **pad)
 
+        row4 = ttk.Frame(frm); row4.pack(fill="x", **pad)
+        self.save_proj_btn = ttk.Button(row4, text="儲存專案（下次可再編輯）", command=self.save_project)
+        self.save_proj_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.open_proj_btn = ttk.Button(row4, text="開啟專案", command=self.open_project)
+        self.open_proj_btn.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
         self.progress = ttk.Progressbar(frm, mode="determinate")
         self.progress.pack(fill="x", **pad)
 
@@ -240,6 +247,8 @@ class App:
         self.export_all_btn.configure(state=state)
         self.export_sel_btn.configure(state=state)
         self.export_merge_btn.configure(state=state)
+        self.save_proj_btn.configure(state=state)
+        self.open_proj_btn.configure(state=state)
         for r in self.rows:
             r["btn"].configure(state=state)
             r["play"].configure(state=state)
@@ -265,6 +274,17 @@ class App:
                     if spks:
                         self.spk_cb.current(
                             spks.index(DEFAULT_SPEAKER) if DEFAULT_SPEAKER in spks else 0)
+                    # 開啟專案：選項載入完成後套用專案內容
+                    if self.pending_project:
+                        p, self.pending_project = self.pending_project, None
+                        if p.get("lang_label") in labels:
+                            self.lang_cb.current(labels.index(p["lang_label"]))
+                        if p.get("speaker") in spks:
+                            self.spk_cb.current(spks.index(p["speaker"]))
+                        self.build_rows([(r.get("zh", ""), r.get("tr", "")) for r in p["rows"]])
+                        for state_r, row in zip(p["rows"], self.rows):
+                            row["var"].set(bool(state_r.get("checked")))
+                        self.log(f"✓ 專案已載入，共 {len(self.rows)} 句，可以繼續編輯")
                 elif kind == "progress":
                     done, total = payload
                     self.progress["maximum"] = total
@@ -535,6 +555,47 @@ class App:
             finally:
                 self.msg_q.put(("done", None))
         threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 專案儲存／開啟（與網頁版通用的 JSON 格式） ----------
+    def save_project(self):
+        if not self.rows:
+            messagebox.showwarning("提示", "編輯區還沒有內容，沒有東西可以存")
+            return
+        path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("族語專案檔", "*.json")],
+            initialfile="族語專案.json")
+        if not path:
+            return
+        data = {
+            "app": "zyfy-project", "version": 1,
+            "ethnicity": self.eth_cb.get(),
+            "lang_label": self.lang_cb.get(),
+            "speaker": self.spk_cb.get(),
+            "rows": [{"zh": r["zh"].get(), "tr": r["tr"].get(), "checked": r["var"].get()}
+                     for r in self.rows],
+        }
+        Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        self.log(f"✓ 專案已儲存：{path}")
+
+    def open_project(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("族語專案檔", "*.json"), ("所有檔案", "*.*")])
+        if not path:
+            return
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+            if data.get("app") != "zyfy-project" or not isinstance(data.get("rows"), list):
+                raise ValueError("不是族語專案檔")
+        except Exception as e:
+            messagebox.showerror("錯誤", f"無法讀取專案檔：{e}")
+            return
+        self.pending_project = data
+        eth = data.get("ethnicity")
+        if eth in ETHNICITIES:
+            self.eth_cb.set(eth)
+        self.log(f"開啟專案：{Path(path).name}（載入選項中…）")
+        self.load_options()  # 選項載入完成後（poll_queue）會自動套用專案內容
 
     # ---------- 串接匯出：全部句子合成一個音檔 ----------
     def export_merged(self):

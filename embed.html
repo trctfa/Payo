@@ -37,6 +37,18 @@
 
   <div class="zyfy-status" id="zyfy-status"></div>
 
+  <div class="zyfy-project-bar">
+    <button type="button" class="zyfy-ghost" id="zyfy-save-proj" title="把目前的句子與翻譯存成專案檔，下次可再編輯">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      <span>儲存專案</span>
+    </button>
+    <button type="button" class="zyfy-ghost" id="zyfy-open-proj" title="開啟之前存的專案檔繼續編輯">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span>開啟專案</span>
+    </button>
+  </div>
+  <input type="file" id="zyfy-proj-file" accept=".json,application/json" style="display:none">
+
   <div class="zyfy-editor" id="zyfy-editor">
     <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻這句、▶ 唸這句、⭳ 下載這句音檔、勾選＝納入「匯出勾選」。</div>
     <div id="zyfy-rows"></div>
@@ -174,6 +186,22 @@
 #zyfy-tool .zyfy-row-main { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #zyfy-tool .zyfy-row-main .zyfy-tr { color: var(--zyfy-ok); font-weight: 700; }
 
+#zyfy-tool .zyfy-project-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+#zyfy-tool .zyfy-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 12px;
+  padding: 10px;
+  background: transparent;
+  color: var(--zyfy-muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-ghost svg { width: 17px; height: 17px; }
+#zyfy-tool .zyfy-ghost:hover:not(:disabled) { border-color: var(--zyfy-accent); color: var(--zyfy-accent); }
+#zyfy-tool .zyfy-ghost:disabled { opacity: .5; cursor: wait; }
 #zyfy-tool .zyfy-textonly { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--zyfy-muted); margin-bottom: 10px; cursor: pointer; }
 #zyfy-tool .zyfy-textonly input { width: 16px; height: 16px; accent-color: var(--zyfy-ok); }
 #zyfy-tool .zyfy-export-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
@@ -223,9 +251,13 @@
   const translateBtn = $('translate'), editorEl = $('editor'), rowsEl = $('rows');
   const textOnlyCb = $('text-only');
   const exportAllBtn = $('export-all'), exportSelBtn = $('export-sel'), exportMergeBtn = $('export-merge');
+  const saveProjBtn = $('save-proj'), openProjBtn = $('open-proj'), projFileInput = $('proj-file');
 
   const audioCache = new Map();   // 「配音員\u0000文字」-> wav Blob（唸過就不重新合成）
+  const AUTO_KEY = 'zyfy_autosave_v1';
   let sharedPlayer = null;
+  let pendingProject = null;   // 開啟專案時暫存，等選項載入完再套用
+  let suppressAutosave = false;
 
   function status(text, isErr) {
     statusEl.textContent = text;
@@ -234,7 +266,9 @@
 
   function setBusy(busy) {
     toolEl.dataset.busy = busy ? '1' : '0';
-    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn]) b.disabled = busy;
+    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn, saveProjBtn, openProjBtn]) {
+      if (b) b.disabled = busy;
+    }
     for (const b of rowsEl.querySelectorAll('button')) b.disabled = busy;
   }
   const isBusy = () => toolEl.dataset.busy === '1';
@@ -391,13 +425,23 @@
       const defLang = langData[0].choices.find(c => c[0] === DEFAULT_LANG_LABEL);
       if (defLang) langSel.value = defLang[1];
       if ([...spkSel.options].some(o => o.value === DEFAULT_SPEAKER)) spkSel.value = DEFAULT_SPEAKER;
-      status('');
+
+      // 開啟專案／自動復原：選項載入完再套用內容
+      if (pendingProject) {
+        const p = pendingProject;
+        pendingProject = null;
+        applyProjectData(p, langData[0].choices, spkData[0].choices);
+      } else {
+        status('');
+      }
     } catch (err) {
       status('載入選項失敗：' + err.message, true);
     }
   }
-  ethSel.addEventListener('change', loadOptions);
-  loadOptions();
+  ethSel.addEventListener('change', () => {
+    scheduleAutosave();
+    loadOptions();
+  });
 
   // ---------- 編輯區 ----------
   function addRow(zh, tr) {
@@ -416,6 +460,9 @@
       '</div>';
     row.querySelector('.zyfy-zh').value = zh;
     row.querySelector('.zyfy-tr').value = tr;
+    row.querySelector('.zyfy-zh').addEventListener('input', scheduleAutosave);
+    row.querySelector('.zyfy-tr').addEventListener('input', scheduleAutosave);
+    row.querySelector('.zyfy-check').addEventListener('change', scheduleAutosave);
 
     // ↻ 重新翻譯這一句
     row.querySelector('.zyfy-re').addEventListener('click', async (ev) => {
@@ -429,6 +476,7 @@
         const native = await translateOne(langSel.value, zhNow);
         row.querySelector('.zyfy-tr').value = native;
         status('重新翻譯完成：' + native);
+        scheduleAutosave();
       } catch (err) {
         status('重翻失敗：' + err.message, true);
       } finally {
@@ -518,6 +566,7 @@
         editorEl.classList.add('zyfy-show');
       }
       status('翻譯完成，共 ' + lines.length + ' 句。可在編輯區修改文字、逐句重翻或試聽，再匯出。');
+      scheduleAutosave();
     } catch (err) {
       console.error(err);
       status('失敗：' + err.message, true);
@@ -525,6 +574,133 @@
       setBusy(false);
     }
   });
+
+  // ---------- 專案：儲存／開啟／自動復原（與 GUI 通用 JSON） ----------
+  function snapshotProject() {
+    const rows = [];
+    for (const row of rowsEl.querySelectorAll('.zyfy-row')) {
+      rows.push({
+        zh: row.querySelector('.zyfy-zh').value,
+        tr: row.querySelector('.zyfy-tr').value,
+        checked: !!row.querySelector('.zyfy-check').checked
+      });
+    }
+    return {
+      app: 'zyfy-project',
+      version: 1,
+      ethnicity: ethSel.value,
+      lang_label: langSel.selectedOptions[0] ? langSel.selectedOptions[0].text : '',
+      speaker: spkSel.value,
+      input: inputBox.value,
+      text_only: !!textOnlyCb.checked,
+      rows: rows
+    };
+  }
+
+  function applyProjectData(p, langChoices, spkChoices) {
+    suppressAutosave = true;
+    try {
+      if (p.lang_label) {
+        const hit = (langChoices || []).find(c => c[0] === p.lang_label);
+        if (hit) langSel.value = hit[1];
+      }
+      if (p.speaker && [...spkSel.options].some(o => o.value === p.speaker)) {
+        spkSel.value = p.speaker;
+      }
+      if (typeof p.input === 'string') inputBox.value = p.input;
+      if (typeof p.text_only === 'boolean') textOnlyCb.checked = p.text_only;
+
+      rowsEl.innerHTML = '';
+      for (const r of (p.rows || [])) {
+        addRow(r.zh || '', r.tr || '');
+        const last = rowsEl.lastElementChild;
+        if (last && r.checked) last.querySelector('.zyfy-check').checked = true;
+      }
+      if ((p.rows || []).length) editorEl.classList.add('zyfy-show');
+      else editorEl.classList.remove('zyfy-show');
+      status('✓ 專案已載入，共 ' + (p.rows || []).length + ' 句，可以繼續編輯');
+    } finally {
+      suppressAutosave = false;
+      scheduleAutosave();
+    }
+  }
+
+  function openProjectObject(data) {
+    if (!data || data.app !== 'zyfy-project' || !Array.isArray(data.rows)) {
+      throw new Error('不是族語專案檔');
+    }
+    pendingProject = data;
+    if (data.ethnicity && [...ethSel.options].some(o => o.value === data.ethnicity)) {
+      ethSel.value = data.ethnicity;
+    }
+    status('開啟專案中（載入選項…）');
+    loadOptions();
+  }
+
+  let autosaveTimer = null;
+  function scheduleAutosave() {
+    if (suppressAutosave) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      try {
+        const snap = snapshotProject();
+        if (!snap.rows.length && !(snap.input || '').trim()) {
+          localStorage.removeItem(AUTO_KEY);
+          return;
+        }
+        localStorage.setItem(AUTO_KEY, JSON.stringify(snap));
+      } catch (e) {
+        console.warn('自動儲存失敗', e);
+      }
+    }, 400);
+  }
+
+  saveProjBtn.addEventListener('click', () => {
+    const snap = snapshotProject();
+    if (!snap.rows.length) {
+      status('編輯區還沒有內容，沒有東西可以存', true);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(snap, null, 1)], { type: 'application/json;charset=utf-8' });
+    downloadBlob(blob, '族語專案_' + ethSel.value + '_' + timeStamp() + '.json');
+    status('✓ 專案已下載，下次可用「開啟專案」繼續編輯');
+    scheduleAutosave();
+  });
+
+  openProjBtn.addEventListener('click', () => projFileInput.click());
+  projFileInput.addEventListener('change', async () => {
+    const file = projFileInput.files && projFileInput.files[0];
+    projFileInput.value = '';
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      openProjectObject(data);
+    } catch (err) {
+      status('無法讀取專案檔：' + err.message, true);
+    }
+  });
+
+  inputBox.addEventListener('input', scheduleAutosave);
+  textOnlyCb.addEventListener('change', scheduleAutosave);
+  langSel.addEventListener('change', scheduleAutosave);
+  spkSel.addEventListener('change', scheduleAutosave);
+
+  // 啟動：若有自動儲存內容就復原，否則載入預設選項
+  try {
+    const raw = localStorage.getItem(AUTO_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data.app === 'zyfy-project' && Array.isArray(data.rows) && data.rows.length) {
+        openProjectObject(data);
+      } else {
+        loadOptions();
+      }
+    } else {
+      loadOptions();
+    }
+  } catch (e) {
+    loadOptions();
+  }
 
   // ---------- 匯出（全部／勾選） ----------
   async function doExport(selectedOnly) {
