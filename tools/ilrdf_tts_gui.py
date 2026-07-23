@@ -37,6 +37,11 @@ ETHNICITIES = ['阿美', '泰雅', '排灣', '布農', '卑南', '魯凱', '鄒'
                '雅美', '邵', '噶瑪蘭', '太魯閣', '撒奇萊雅', '賽德克',
                '拉阿魯哇', '卡那卡那富']
 
+# 開啟程式時的預設選擇（選項清單中找不到時退回第一個）
+DEFAULT_ETHNICITY = "阿美"
+DEFAULT_LANG_LABEL = "阿美_南勢"
+DEFAULT_SPEAKER = "阿美_南勢_女聲"
+
 CTX = ssl.create_default_context()
 # 該網站憑證鏈在部分環境驗證不過；如你的環境正常，可拿掉下面兩行
 CTX.check_hostname = False
@@ -151,7 +156,7 @@ class App:
         row1 = ttk.Frame(frm); row1.pack(fill="x", **pad)
         ttk.Label(row1, text="族別").pack(side="left")
         self.eth_cb = ttk.Combobox(row1, values=ETHNICITIES, state="readonly", width=10)
-        self.eth_cb.set(ETHNICITIES[0])
+        self.eth_cb.set(DEFAULT_ETHNICITY)
         self.eth_cb.pack(side="left", padx=(4, 16))
         self.eth_cb.bind("<<ComboboxSelected>>", lambda e: self.load_options())
 
@@ -251,10 +256,15 @@ class App:
                 elif kind == "options":
                     langs, spks = payload
                     self.lang_choices = langs
-                    self.lang_cb["values"] = [l[0] for l in langs]
-                    if langs: self.lang_cb.current(0)
+                    labels = [l[0] for l in langs]
+                    self.lang_cb["values"] = labels
+                    if langs:
+                        self.lang_cb.current(
+                            labels.index(DEFAULT_LANG_LABEL) if DEFAULT_LANG_LABEL in labels else 0)
                     self.spk_cb["values"] = spks
-                    if spks: self.spk_cb.current(0)
+                    if spks:
+                        self.spk_cb.current(
+                            spks.index(DEFAULT_SPEAKER) if DEFAULT_SPEAKER in spks else 0)
                 elif kind == "progress":
                     done, total = payload
                     self.progress["maximum"] = total

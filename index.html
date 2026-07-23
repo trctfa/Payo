@@ -345,6 +345,10 @@
       langChoices = langData[0].choices;
       for (const [label, code] of langChoices) langSel.add(new Option(label, code));
       for (const [label] of spkData[0].choices) spkSel.add(new Option(label, label));
+      // 預設選擇：阿美_南勢／阿美_南勢_女聲（清單裡沒有就維持第一個）
+      const defLang = langChoices.find(c => c[0] === '阿美_南勢');
+      if (defLang) langSel.value = defLang[1];
+      if ([...spkSel.options].some(o => o.value === '阿美_南勢_女聲')) spkSel.value = '阿美_南勢_女聲';
       status('');
     } catch (err) {
       status('載入選項失敗：' + err.message, true);
