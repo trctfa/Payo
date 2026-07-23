@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-原住民族語言 AI 翻譯合成小幫手（GUI 版）
-中文 -> 族語翻譯 -> 語音合成 -> 存成 WAV（檔名 = 翻譯結果）
+原住民族語言 AI 翻譯合成小幫手（GUI 編輯版）
+
+工作流程：
+  步驟一：貼上多行中文（一行一句）→ 按「翻譯全部句子」
+  步驟二：編輯區列出「一行中文、一行翻譯」，所有文字都可直接修改；
+          改完中文可按該行的「重新」單獨重翻那一句
+  步驟三：按「匯出全部」把語音＋對照文字檔存到輸出資料夾；
+          或勾選部分句子按「匯出勾選」單獨匯出
 
 需求：Python 3.10+（tkinter 為標準庫，Windows/macOS 官方安裝版都有內建）
 用法：python3 ilrdf_tts_gui.py
@@ -69,21 +75,13 @@ def fetch_options(ethnicity):
     spks = [c[1] for c in gradio_call(TTS_APP, "lambda", [ethnicity], uuid.uuid4().hex)[0]["choices"]]
     return langs, spks
 
-def translate(ethnicity, lang_code, text):
-    sess = uuid.uuid4().hex
-    # 需在同一 session 先解鎖該族別的語別選項，否則伺服器驗證會拒絕
-    gradio_call(TRANSLATE_APP, "lambda_1", [ethnicity], sess)
-    out = gradio_call(TRANSLATE_APP, "translate_1", [text, "zho_Hant", lang_code], sess)
+def translate_one(ethnicity, lang_code, text, session=None):
+    """翻譯一句。session 為 None 時自建新 session 並解鎖族別。"""
+    if session is None:
+        session = uuid.uuid4().hex
+        gradio_call(TRANSLATE_APP, "lambda_1", [ethnicity], session)
+    out = gradio_call(TRANSLATE_APP, "translate_1", [text, "zho_Hant", lang_code], session)
     return (out[0] or "").strip()
-
-def synthesize(ethnicity, speaker, text):
-    sess = uuid.uuid4().hex
-    gradio_call(TTS_APP, "lambda", [ethnicity], sess)
-    out = gradio_call(TTS_APP, "default_speaker_tts", [speaker, text], sess)
-    file = out[0]
-    if not file or not file.get("url"):
-        raise RuntimeError("合成結果沒有音檔")
-    return file["url"]
 
 def sanitize(name):
     name = re.sub(r'[\\/:*?"<>|\r\n]+', " ", name or "")
@@ -94,13 +92,14 @@ def sanitize(name):
 class App:
     def __init__(self, root):
         self.root = root
-        root.title("族語翻譯合成小幫手")
-        root.geometry("620x640")
-        root.minsize(560, 560)
+        root.title("族語翻譯合成小幫手（編輯版）")
+        root.geometry("820x900")
+        root.minsize(700, 720)
 
         self.msg_q = queue.Queue()
         self.running = False
         self.lang_choices = []   # [[顯示名, 代碼], ...]
+        self.rows = []           # 編輯區每行：{'var','zh','tr','btn','frame'}
 
         pad = {"padx": 8, "pady": 4}
         frm = ttk.Frame(root)
@@ -122,32 +121,59 @@ class App:
         self.spk_cb = ttk.Combobox(row1, state="readonly", width=18)
         self.spk_cb.pack(side="left", padx=4)
 
-        # --- 輸入區 ---
-        ttk.Label(frm, text="中文句子（一行一句，會逐句翻譯＋合成）：").pack(anchor="w", **pad)
-        self.input_txt = scrolledtext.ScrolledText(frm, height=8, font=("", 12))
-        self.input_txt.pack(fill="both", expand=True, **pad)
+        # --- 步驟一：輸入 ---
+        ttk.Label(frm, text="步驟一：貼上中文文章（一行一句）→ 按「翻譯全部句子」").pack(anchor="w", **pad)
+        self.input_txt = scrolledtext.ScrolledText(frm, height=5, font=("", 12))
+        self.input_txt.pack(fill="x", **pad)
+        self.translate_btn = ttk.Button(frm, text="翻譯全部句子 → 進入編輯區", command=self.translate_all)
+        self.translate_btn.pack(fill="x", **pad)
 
-        # --- 輸出資料夾 ---
+        # --- 步驟二：編輯區 ---
+        editor_box = ttk.LabelFrame(
+            frm, text="步驟二：編輯區（上排中文、下排翻譯都可以直接修改；改完中文按「重新」單獨重翻那一句）")
+        editor_box.pack(fill="both", expand=True, **pad)
+
+        self.canvas = tk.Canvas(editor_box, highlightthickness=0)
+        sb = ttk.Scrollbar(editor_box, orient="vertical", command=self.canvas.yview)
+        self.rows_frame = ttk.Frame(self.canvas)
+        self._canvas_win = self.canvas.create_window((0, 0), window=self.rows_frame, anchor="nw")
+        self.rows_frame.bind("<Configure>",
+                             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.bind("<Configure>",
+                         lambda e: self.canvas.itemconfigure(self._canvas_win, width=e.width))
+        self.canvas.configure(yscrollcommand=sb.set)
+        self.canvas.pack(side="left", fill="both", expand=True)
+        sb.pack(side="right", fill="y")
+        # 滑鼠滾輪（Windows / Linux）
+        self.canvas.bind_all("<MouseWheel>",
+                             lambda e: self.canvas.yview_scroll(-1 * (e.delta // 120), "units"))
+        self.canvas.bind_all("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
+        self.canvas.bind_all("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
+
+        # --- 步驟三：匯出 ---
         row2 = ttk.Frame(frm); row2.pack(fill="x", **pad)
         ttk.Label(row2, text="輸出資料夾").pack(side="left")
         self.outdir_var = tk.StringVar(value=str(Path.cwd() / "output"))
         ttk.Entry(row2, textvariable=self.outdir_var).pack(side="left", fill="x", expand=True, padx=4)
         ttk.Button(row2, text="瀏覽…", command=self.pick_outdir).pack(side="left")
 
-        # --- 執行 ---
         self.text_only_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(frm, text="只翻譯、不合成語音（僅輸出對照文字檔）",
+        ttk.Checkbutton(frm, text="匯出時只存對照文字檔，不合成語音",
                         variable=self.text_only_var).pack(anchor="w", **pad)
+
         row3 = ttk.Frame(frm); row3.pack(fill="x", **pad)
-        self.run_btn = ttk.Button(row3, text="開始 翻譯 ＋ 合成 ＋ 存檔", command=self.start)
-        self.run_btn.pack(side="left", fill="x", expand=True)
+        self.export_all_btn = ttk.Button(row3, text="匯出全部（語音＋文字檔）",
+                                         command=lambda: self.export(selected_only=False))
+        self.export_all_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self.export_sel_btn = ttk.Button(row3, text="匯出勾選項目",
+                                         command=lambda: self.export(selected_only=True))
+        self.export_sel_btn.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
         self.progress = ttk.Progressbar(frm, mode="determinate")
         self.progress.pack(fill="x", **pad)
 
-        # --- 紀錄 ---
-        ttk.Label(frm, text="進度紀錄：").pack(anchor="w", **pad)
-        self.log_txt = scrolledtext.ScrolledText(frm, height=10, state="disabled", font=("", 11))
-        self.log_txt.pack(fill="both", expand=True, **pad)
+        self.log_txt = scrolledtext.ScrolledText(frm, height=6, state="disabled", font=("", 10))
+        self.log_txt.pack(fill="x", **pad)
 
         self.root.after(100, self.poll_queue)
         self.load_options()
@@ -155,6 +181,15 @@ class App:
     # ---------- UI 工具 ----------
     def log(self, text):
         self.msg_q.put(("log", text))
+
+    def set_busy(self, busy):
+        self.running = busy
+        state = "disabled" if busy else "normal"
+        self.translate_btn.configure(state=state)
+        self.export_all_btn.configure(state=state)
+        self.export_sel_btn.configure(state=state)
+        for r in self.rows:
+            r["btn"].configure(state=state)
 
     def poll_queue(self):
         try:
@@ -176,9 +211,20 @@ class App:
                     done, total = payload
                     self.progress["maximum"] = total
                     self.progress["value"] = done
+                elif kind == "rows":
+                    self.build_rows(payload)
+                elif kind == "set_tr":
+                    idx, text = payload
+                    if 0 <= idx < len(self.rows):
+                        e = self.rows[idx]["tr"]
+                        e.delete(0, "end")
+                        e.insert(0, text)
+                elif kind == "btn_reset":
+                    idx = payload
+                    if 0 <= idx < len(self.rows):
+                        self.rows[idx]["btn"].configure(state="normal", text="重新")
                 elif kind == "done":
-                    self.running = False
-                    self.run_btn.configure(state="normal", text="開始 翻譯 ＋ 合成 ＋ 存檔")
+                    self.set_busy(False)
         except queue.Empty:
             pass
         self.root.after(100, self.poll_queue)
@@ -187,6 +233,12 @@ class App:
         d = filedialog.askdirectory(initialdir=self.outdir_var.get() or ".")
         if d:
             self.outdir_var.set(d)
+
+    def current_selection(self):
+        eth = self.eth_cb.get()
+        lang_code = self.lang_choices[self.lang_cb.current()][1]
+        speaker = self.spk_cb.get()
+        return eth, lang_code, speaker
 
     # ---------- 載入語別/配音員 ----------
     def load_options(self):
@@ -203,69 +255,171 @@ class App:
                 self.log(f"載入選項失敗：{e}")
         threading.Thread(target=worker, daemon=True).start()
 
-    # ---------- 主流程 ----------
-    def start(self):
+    # ---------- 編輯區 ----------
+    def build_rows(self, pairs):
+        for w in self.rows_frame.winfo_children():
+            w.destroy()
+        self.rows = []
+        for idx, (zh, tr) in enumerate(pairs):
+            f = ttk.Frame(self.rows_frame, padding=(4, 4))
+            f.pack(fill="x", expand=True)
+
+            left = ttk.Frame(f)
+            left.grid(row=0, column=0, rowspan=2, sticky="n", padx=(0, 4))
+            var = tk.BooleanVar(value=False)
+            ttk.Checkbutton(left, variable=var).pack()
+            btn = ttk.Button(left, text="重新", width=5,
+                             command=lambda i=idx: self.retranslate(i))
+            btn.pack(pady=(2, 0))
+
+            zh_e = tk.Entry(f, font=("", 12))
+            zh_e.insert(0, zh)
+            zh_e.grid(row=0, column=1, sticky="ew")
+            tr_e = tk.Entry(f, font=("", 13), fg="#0a7d4f")
+            tr_e.insert(0, tr)
+            tr_e.grid(row=1, column=1, sticky="ew", pady=(3, 0))
+            f.columnconfigure(1, weight=1)
+
+            ttk.Separator(self.rows_frame).pack(fill="x", pady=2)
+            self.rows.append({"var": var, "zh": zh_e, "tr": tr_e, "btn": btn, "frame": f})
+        self.canvas.yview_moveto(0)
+
+    # ---------- 步驟一：翻譯全部 ----------
+    def translate_all(self):
         if self.running:
             return
-        sentences = [ln.strip() for ln in self.input_txt.get("1.0", "end").splitlines() if ln.strip()]
-        if not sentences:
-            messagebox.showwarning("提示", "請先輸入至少一句中文")
+        lines = [ln.strip() for ln in self.input_txt.get("1.0", "end").splitlines() if ln.strip()]
+        if not lines:
+            messagebox.showwarning("提示", "請先在步驟一貼上中文（一行一句）")
             return
         if self.lang_cb.current() < 0 or self.lang_cb.get() == "載入中…":
             messagebox.showwarning("提示", "語別尚未載入完成")
             return
-        if not self.text_only_var.get() and (not self.spk_cb.get() or self.spk_cb.get() == "載入中…"):
+        eth, lang_code, _ = self.current_selection()
+
+        self.set_busy(True)
+        self.msg_q.put(("progress", (0, len(lines))))
+
+        def worker():
+            pairs = []
+            try:
+                sess = uuid.uuid4().hex
+                gradio_call(TRANSLATE_APP, "lambda_1", [eth], sess)  # 解鎖族別，一次即可
+                for i, zh in enumerate(lines, 1):
+                    try:
+                        native = translate_one(eth, lang_code, zh, session=sess)
+                        self.log(f"[{i}/{len(lines)}] {zh} → {native}")
+                    except Exception as e:
+                        native = ""
+                        self.log(f"[{i}/{len(lines)}] {zh} → ✗ 翻譯失敗：{e}")
+                    pairs.append((zh, native))
+                    self.msg_q.put(("progress", (i, len(lines))))
+                self.msg_q.put(("rows", pairs))
+                self.log(f"—— 翻譯完成，共 {len(pairs)} 句，請在編輯區修改後匯出 ——")
+            except Exception as e:
+                self.log(f"✗ 翻譯中斷：{e}")
+            finally:
+                self.msg_q.put(("done", None))
+        threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 單行重翻 ----------
+    def retranslate(self, idx):
+        if self.running:
+            return
+        zh = self.rows[idx]["zh"].get().strip()
+        if not zh:
+            messagebox.showwarning("提示", "這一行的中文是空的")
+            return
+        if self.lang_cb.current() < 0:
+            return
+        eth, lang_code, _ = self.current_selection()
+
+        btn = self.rows[idx]["btn"]
+        btn.configure(state="disabled", text="翻譯中")
+
+        def worker():
+            try:
+                native = translate_one(eth, lang_code, zh)
+                self.msg_q.put(("set_tr", (idx, native)))
+                self.log(f"重新翻譯第 {idx + 1} 行：{zh} → {native}")
+            except Exception as e:
+                self.log(f"✗ 第 {idx + 1} 行重翻失敗：{e}")
+            finally:
+                # 一律透過訊息佇列回到主執行緒更新 UI
+                self.msg_q.put(("btn_reset", idx))
+        threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 步驟三：匯出 ----------
+    def export(self, selected_only):
+        if self.running:
+            return
+        if not self.rows:
+            messagebox.showwarning("提示", "編輯區還沒有內容，請先執行步驟一")
+            return
+
+        items = []  # (列號, 中文, 翻譯)
+        for i, r in enumerate(self.rows):
+            if selected_only and not r["var"].get():
+                continue
+            zh = r["zh"].get().strip()
+            tr = r["tr"].get().strip()
+            if zh and tr:
+                items.append((i + 1, zh, tr))
+        if not items:
+            messagebox.showwarning(
+                "提示", "沒有可匯出的句子" + ("（請先勾選要匯出的行）" if selected_only else ""))
+            return
+
+        text_only = self.text_only_var.get()
+        if not text_only and (not self.spk_cb.get() or self.spk_cb.get() == "載入中…"):
             messagebox.showwarning("提示", "配音員尚未載入完成")
             return
 
-        eth = self.eth_cb.get()
-        lang_code = self.lang_choices[self.lang_cb.current()][1]
-        speaker = self.spk_cb.get()
+        eth, _, speaker = self.current_selection()
         outdir = Path(self.outdir_var.get())
         outdir.mkdir(parents=True, exist_ok=True)
 
-        self.running = True
-        self.run_btn.configure(state="disabled", text="處理中…")
-        self.msg_q.put(("progress", (0, len(sentences))))
-
-        text_only = self.text_only_var.get()
+        self.set_busy(True)
+        self.msg_q.put(("progress", (0, len(items))))
 
         def worker():
             ok = fail = 0
-            pairs = []  # 依序記錄 (中文, 族語)
-            for i, zh in enumerate(sentences, 1):
-                try:
-                    self.log(f"[{i}/{len(sentences)}] 翻譯：{zh}")
-                    native = translate(eth, lang_code, zh)
-                    if not native:
-                        raise RuntimeError("翻譯結果為空")
-                    self.log(f"    → {native}")
-                    pairs.append((zh, native))
-                    if not text_only:
-                        if len(native) > 300:
-                            raise RuntimeError("翻譯結果超過 300 字元上限")
-                        self.log("    合成中…（約 5~20 秒）")
-                        url = synthesize(eth, speaker, native)
-                        dest = outdir / (sanitize(native) + ".wav")
-                        with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
-                            dest.write_bytes(r.read())
-                        self.log(f"    ✓ 已存檔：{dest.name}")
-                    ok += 1
-                except Exception as e:
-                    self.log(f"    ✗ 失敗：{e}")
-                    fail += 1
-                self.msg_q.put(("progress", (i, len(sentences))))
+            try:
+                sess = None
+                if not text_only:
+                    sess = uuid.uuid4().hex
+                    gradio_call(TTS_APP, "lambda", [eth], sess)  # 解鎖配音員，一次即可
 
-            if pairs:
-                # 一行中文、一行翻譯，依順序列出（utf-8-sig 讓 Windows 記事本正確開啟）
-                txt_path = outdir / "翻譯對照.txt"
+                for n, (row_no, zh, tr) in enumerate(items, 1):
+                    try:
+                        if not text_only:
+                            if len(tr) > 300:
+                                raise RuntimeError("翻譯超過 300 字元上限")
+                            self.log(f"[{n}/{len(items)}] 第 {row_no} 行合成中：{tr}")
+                            out = gradio_call(TTS_APP, "default_speaker_tts", [speaker, tr], sess)
+                            url = out[0]["url"]
+                            dest = outdir / (sanitize(tr) + ".wav")
+                            with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
+                                dest.write_bytes(r.read())
+                            self.log(f"    ✓ 音檔：{dest.name}")
+                        ok += 1
+                    except Exception as e:
+                        self.log(f"    ✗ 第 {row_no} 行失敗：{e}")
+                        fail += 1
+                    self.msg_q.put(("progress", (n, len(items))))
+
+                # 一行中文、一行翻譯，依編輯區順序（utf-8-sig 讓 Windows 記事本正確開啟）
+                txt_name = "翻譯對照_勾選.txt" if selected_only else "翻譯對照.txt"
+                txt_path = outdir / txt_name
                 txt_path.write_text(
-                    "\n".join(line for zh_, nat in pairs for line in (zh_, nat)) + "\n",
+                    "\n".join(line for _, zh, tr in items for line in (zh, tr)) + "\n",
                     encoding="utf-8-sig")
-                self.log(f"✓ 對照文字檔：{txt_path.name}（共 {len(pairs)} 句）")
-
-            self.log(f"—— 全部完成：成功 {ok} 句、失敗 {fail} 句，檔案在 {outdir} ——")
-            self.msg_q.put(("done", None))
+                self.log(f"✓ 對照文字檔：{txt_path.name}（共 {len(items)} 句）")
+                self.log(f"—— 匯出完成：成功 {ok} 句、失敗 {fail} 句，檔案在 {outdir} ——")
+            except Exception as e:
+                self.log(f"✗ 匯出中斷：{e}")
+            finally:
+                self.msg_q.put(("done", None))
         threading.Thread(target=worker, daemon=True).start()
 
 def main():
