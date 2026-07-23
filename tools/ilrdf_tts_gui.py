@@ -135,6 +135,9 @@ class App:
         ttk.Button(row2, text="瀏覽…", command=self.pick_outdir).pack(side="left")
 
         # --- 執行 ---
+        self.text_only_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(frm, text="只翻譯、不合成語音（僅輸出對照文字檔）",
+                        variable=self.text_only_var).pack(anchor="w", **pad)
         row3 = ttk.Frame(frm); row3.pack(fill="x", **pad)
         self.run_btn = ttk.Button(row3, text="開始 翻譯 ＋ 合成 ＋ 存檔", command=self.start)
         self.run_btn.pack(side="left", fill="x", expand=True)
@@ -208,8 +211,11 @@ class App:
         if not sentences:
             messagebox.showwarning("提示", "請先輸入至少一句中文")
             return
-        if self.lang_cb.current() < 0 or not self.spk_cb.get() or self.spk_cb.get() == "載入中…":
-            messagebox.showwarning("提示", "語別／配音員尚未載入完成")
+        if self.lang_cb.current() < 0 or self.lang_cb.get() == "載入中…":
+            messagebox.showwarning("提示", "語別尚未載入完成")
+            return
+        if not self.text_only_var.get() and (not self.spk_cb.get() or self.spk_cb.get() == "載入中…"):
+            messagebox.showwarning("提示", "配音員尚未載入完成")
             return
 
         eth = self.eth_cb.get()
@@ -222,8 +228,11 @@ class App:
         self.run_btn.configure(state="disabled", text="處理中…")
         self.msg_q.put(("progress", (0, len(sentences))))
 
+        text_only = self.text_only_var.get()
+
         def worker():
             ok = fail = 0
+            pairs = []  # 依序記錄 (中文, 族語)
             for i, zh in enumerate(sentences, 1):
                 try:
                     self.log(f"[{i}/{len(sentences)}] 翻譯：{zh}")
@@ -231,19 +240,30 @@ class App:
                     if not native:
                         raise RuntimeError("翻譯結果為空")
                     self.log(f"    → {native}")
-                    if len(native) > 300:
-                        raise RuntimeError("翻譯結果超過 300 字元上限")
-                    self.log("    合成中…（約 5~20 秒）")
-                    url = synthesize(eth, speaker, native)
-                    dest = outdir / (sanitize(native) + ".wav")
-                    with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
-                        dest.write_bytes(r.read())
-                    self.log(f"    ✓ 已存檔：{dest.name}")
+                    pairs.append((zh, native))
+                    if not text_only:
+                        if len(native) > 300:
+                            raise RuntimeError("翻譯結果超過 300 字元上限")
+                        self.log("    合成中…（約 5~20 秒）")
+                        url = synthesize(eth, speaker, native)
+                        dest = outdir / (sanitize(native) + ".wav")
+                        with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
+                            dest.write_bytes(r.read())
+                        self.log(f"    ✓ 已存檔：{dest.name}")
                     ok += 1
                 except Exception as e:
                     self.log(f"    ✗ 失敗：{e}")
                     fail += 1
                 self.msg_q.put(("progress", (i, len(sentences))))
+
+            if pairs:
+                # 一行中文、一行翻譯，依順序列出（utf-8-sig 讓 Windows 記事本正確開啟）
+                txt_path = outdir / "翻譯對照.txt"
+                txt_path.write_text(
+                    "\n".join(line for zh_, nat in pairs for line in (zh_, nat)) + "\n",
+                    encoding="utf-8-sig")
+                self.log(f"✓ 對照文字檔：{txt_path.name}（共 {len(pairs)} 句）")
+
             self.log(f"—— 全部完成：成功 {ok} 句、失敗 {fail} 句，檔案在 {outdir} ——")
             self.msg_q.put(("done", None))
         threading.Thread(target=worker, daemon=True).start()

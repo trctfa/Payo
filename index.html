@@ -133,6 +133,16 @@
   .run-btn:hover:not(:disabled) { filter: brightness(1.1); }
   .run-btn:active:not(:disabled) { transform: scale(.99); }
   .run-btn:disabled { opacity: .55; cursor: wait; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-row .run-btn { flex: 1; min-width: 200px; }
+  .run-btn.alt { background: linear-gradient(90deg, #34d399, #38bdf8); }
+
+  .pair { padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.15); }
+  .pair:last-of-type { border-bottom: 0; }
+  .pair .zh { color: var(--muted); font-size: 14px; }
+  .pair .tr { color: var(--ok); font-size: 17px; font-weight: 700; word-break: break-word; }
+  .pair .tr.fail { color: var(--err); font-weight: 400; }
+  #pairs { margin-bottom: 12px; max-height: 320px; overflow-y: auto; }
 
   .status { margin-top: 14px; font-size: 14px; color: var(--accent); min-height: 21px; }
   .status.err { color: var(--err); }
@@ -207,13 +217,20 @@
         <select id="spk"><option>載入中…</option></select>
       </div>
     </div>
-    <textarea id="input" maxlength="200" placeholder="輸入中文，例如：你好嗎？今天天氣真好。"></textarea>
-    <button class="run-btn" id="run">翻譯 ＋ 朗讀</button>
+    <textarea id="input" maxlength="2000" placeholder="輸入中文，例如：你好嗎？&#10;要批次翻譯的話，一行輸入一句。"></textarea>
+    <div class="btn-row">
+      <button class="run-btn" id="run">翻譯 ＋ 朗讀</button>
+      <button class="run-btn alt" id="batch">批次翻譯 ＋ 存文字檔</button>
+    </div>
     <div class="status" id="status"></div>
     <div class="result" id="result">
       <div class="native" id="native"></div>
       <audio id="player" controls></audio>
       <button class="dl" id="download">⬇ 下載音檔</button>
+    </div>
+    <div class="result" id="batch-result">
+      <div id="pairs"></div>
+      <button class="dl" id="download-txt">⬇ 下載對照文字檔</button>
     </div>
   </div>
 </div>
@@ -237,6 +254,7 @@
   const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
   const inputBox = $('input'), runBtn = $('run'), statusEl = $('status');
   const resultEl = $('result'), nativeEl = $('native'), player = $('player'), dlBtn = $('download');
+  const batchBtn = $('batch'), batchResultEl = $('batch-result'), pairsEl = $('pairs'), dlTxtBtn = $('download-txt');
 
   let lastAudioBlob = null, lastFilename = 'tts_audio.wav';
 
@@ -336,7 +354,8 @@
   loadOptions();
 
   runBtn.addEventListener('click', async () => {
-    const text = inputBox.value.trim();
+    // 單句模式：多行時只取第一行（整批請用「批次翻譯」）
+    const text = (inputBox.value.split('\n').map(s => s.trim()).find(s => s) || '');
     if (!text) { status('請先輸入中文', true); return; }
     if (!langSel.value || !spkSel.value) { status('語別／配音員尚未載入完成', true); return; }
 
@@ -378,6 +397,76 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
+
+  // ---------- 批次翻譯 ＋ 匯出對照文字檔 ----------
+  let lastTxtContent = '';
+
+  function downloadTextFile() {
+    if (!lastTxtContent) return;
+    // 加 BOM 讓 Windows 記事本正確以 UTF-8 開啟
+    const blob = new Blob(['\ufeff' + lastTxtContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
+                  '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+    a.download = '翻譯對照_' + ethSel.value + '_' + stamp + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  batchBtn.addEventListener('click', async () => {
+    const lines = inputBox.value.split('\n').map(s => s.trim()).filter(s => s);
+    if (!lines.length) { status('請先輸入中文（一行一句）', true); return; }
+    if (!langSel.value) { status('語別尚未載入完成', true); return; }
+
+    batchBtn.disabled = runBtn.disabled = true;
+    batchResultEl.classList.remove('show');
+    pairsEl.innerHTML = '';
+    const txtLines = [];
+
+    try {
+      // 整批共用同一個 session：解鎖一次族別即可
+      const sess = newSession();
+      await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
+
+      for (let i = 0; i < lines.length; i++) {
+        status('批次翻譯中（' + (i + 1) + '/' + lines.length + '）：' + lines[i]);
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'pair';
+        try {
+          const out = await gradioCall(TRANSLATE_APP, 'translate_1', [lines[i], 'zho_Hant', langSel.value], sess);
+          const native = (out[0] || '').trim();
+          if (!native) throw new Error('翻譯結果為空');
+          txtLines.push(lines[i], native);
+          pairDiv.innerHTML = '<div class="zh"></div><div class="tr"></div>';
+          pairDiv.querySelector('.zh').textContent = lines[i];
+          pairDiv.querySelector('.tr').textContent = native;
+        } catch (err) {
+          pairDiv.innerHTML = '<div class="zh"></div><div class="tr fail"></div>';
+          pairDiv.querySelector('.zh').textContent = lines[i];
+          pairDiv.querySelector('.tr').textContent = '（翻譯失敗：' + err.message + '）';
+        }
+        pairsEl.appendChild(pairDiv);
+        batchResultEl.classList.add('show');
+      }
+
+      if (!txtLines.length) throw new Error('全部句子都翻譯失敗');
+      lastTxtContent = txtLines.join('\n') + '\n';
+      downloadTextFile();
+      status('批次完成！共 ' + (txtLines.length / 2) + ' 句，文字檔已下載（也可用下方按鈕重新下載）。');
+    } catch (err) {
+      console.error(err);
+      status('失敗：' + err.message, true);
+    } finally {
+      batchBtn.disabled = runBtn.disabled = false;
+    }
+  });
+
+  dlTxtBtn.addEventListener('click', downloadTextFile);
 })();
 </script>
 </body>

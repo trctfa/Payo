@@ -91,6 +91,7 @@ def main():
     ap.add_argument("--speaker", default=None, help="配音員（不填則用該族第一位）")
     ap.add_argument("--file", default=None, help="每行一句中文的文字檔")
     ap.add_argument("--outdir", default="output", help="輸出資料夾")
+    ap.add_argument("--text-only", action="store_true", help="只翻譯並輸出對照文字檔，不做語音合成")
     ap.add_argument("sentences", nargs="*", help="要翻譯合成的中文句子")
     args = ap.parse_args()
 
@@ -103,20 +104,32 @@ def main():
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
+    pairs = []  # 依序記錄 (中文, 族語)
     for i, zh in enumerate(sentences, 1):
         print(f"[{i}/{len(sentences)}] 翻譯：{zh}")
         native = translate(args.ethnicity, zh, args.lang)
         if not native:
             print("  ! 翻譯結果為空，跳過"); continue
         print(f"  -> {native}")
+        pairs.append((zh, native))
+        if args.text_only:
+            continue
         if len(native) > 300:
-            print("  ! 超過 300 字元上限，跳過"); continue
+            print("  ! 超過 300 字元上限，跳過合成"); continue
         print("  合成中…")
         url = synthesize(args.ethnicity, native, args.speaker)
         dest = outdir / (sanitize(native) + ".wav")
         with urllib.request.urlopen(url, context=CTX) as r:
             dest.write_bytes(r.read())
         print(f"  ✓ 已存檔：{dest}")
+
+    if pairs:
+        # 一行中文、一行翻譯，依順序列出（utf-8-sig 讓 Windows 記事本正確開啟）
+        txt_path = outdir / "翻譯對照.txt"
+        txt_path.write_text(
+            "\n".join(line for zh, native in pairs for line in (zh, native)) + "\n",
+            encoding="utf-8-sig")
+        print(f"✓ 對照文字檔：{txt_path}（共 {len(pairs)} 句）")
 
 if __name__ == "__main__":
     main()

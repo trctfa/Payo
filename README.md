@@ -11,6 +11,16 @@
 | `tools/ilrdf_tts.py` | 命令列批次工具：`python3 ilrdf_tts.py --ethnicity 太魯閣 --file sentences.txt` |
 | `tools/ilrdf_tts_gui.py` | 桌面 GUI 版（tkinter，Python 內建），適合批次做教材音檔 |
 
+## 批次翻譯＋對照文字檔
+
+三個版本都支援「一行中文、一行族語翻譯」依序列出並存成文字檔：
+
+- **Landing page**：輸入多行中文（一行一句），按「批次翻譯 ＋ 存文字檔」，頁面會依序顯示對照結果並自動下載 `翻譯對照_<族別>_<時間>.txt`。
+- **命令列**：跑完自動在輸出資料夾產生 `翻譯對照.txt`；加 `--text-only` 可只翻譯、跳過語音合成。
+- **GUI**：跑完自動產生 `翻譯對照.txt`；勾選「只翻譯、不合成語音」可跳過音檔。
+
+文字檔以 UTF-8（含 BOM）儲存，Windows 記事本可直接開啟。
+
 ## 部署 Landing Page
 
 `index.html` 沒有任何後端與相依套件，選一種方式即可：
