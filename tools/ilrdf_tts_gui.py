@@ -13,14 +13,20 @@
 需求：Python 3.10+（tkinter 為標準庫，Windows/macOS 官方安裝版都有內建）
 用法：python3 ilrdf_tts_gui.py
 """
+import io
 import json
 import queue
 import re
+import shutil
 import ssl
+import subprocess
+import sys
+import tempfile
 import threading
 import tkinter as tk
 import urllib.request
 import uuid
+import wave
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
@@ -88,6 +94,40 @@ def sanitize(name):
     name = re.sub(r"\s+", " ", name).strip()[:60].strip()
     return name or "tts_audio"
 
+def merge_wavs(blobs, gap_seconds=0.4):
+    """把多個 WAV（格式需相同）串接成一個，句子之間加一小段靜音。"""
+    out_buf = io.BytesIO()
+    params = None
+    silence = b""
+    with wave.open(out_buf, "wb") as w:
+        for i, blob in enumerate(blobs):
+            with wave.open(io.BytesIO(blob)) as r:
+                if params is None:
+                    params = r.getparams()
+                    w.setparams(params)
+                    silence = b"\x00" * (int(params.framerate * gap_seconds)
+                                         * params.sampwidth * params.nchannels)
+                if i > 0:
+                    w.writeframes(silence)
+                w.writeframes(r.readframes(r.getnframes()))
+    return out_buf.getvalue()
+
+def play_wav_file(path):
+    """播放 WAV。Windows 用內建 winsound；macOS/Linux 找系統播放器。回傳是否成功啟動。"""
+    try:
+        if sys.platform == "win32":
+            import winsound
+            winsound.PlaySound(str(path), winsound.SND_FILENAME | winsound.SND_ASYNC)
+            return True
+        for cmd in (["afplay"], ["paplay"], ["aplay", "-q"], ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet"]):
+            if shutil.which(cmd[0]):
+                subprocess.Popen(cmd + [str(path)],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return True
+    except Exception:
+        pass
+    return False
+
 # ---------------- GUI ----------------
 class App:
     def __init__(self, root):
@@ -99,7 +139,9 @@ class App:
         self.msg_q = queue.Queue()
         self.running = False
         self.lang_choices = []   # [[顯示名, 代碼], ...]
-        self.rows = []           # 編輯區每行：{'var','zh','tr','btn','frame'}
+        self.rows = []           # 編輯區每行：{'var','zh','tr','btn','play','frame'}
+        self.audio_cache = {}    # (配音員, 文字) -> wav bytes，避免重複合成
+        self.tmpdir = Path(tempfile.mkdtemp(prefix="ilrdf_tts_"))
 
         pad = {"padx": 8, "pady": 4}
         frm = ttk.Frame(root)
@@ -169,6 +211,10 @@ class App:
                                          command=lambda: self.export(selected_only=True))
         self.export_sel_btn.pack(side="left", fill="x", expand=True, padx=(4, 0))
 
+        self.export_merge_btn = ttk.Button(
+            frm, text="串接全部句子 → 匯出成一個語音檔", command=self.export_merged)
+        self.export_merge_btn.pack(fill="x", **pad)
+
         self.progress = ttk.Progressbar(frm, mode="determinate")
         self.progress.pack(fill="x", **pad)
 
@@ -188,8 +234,10 @@ class App:
         self.translate_btn.configure(state=state)
         self.export_all_btn.configure(state=state)
         self.export_sel_btn.configure(state=state)
+        self.export_merge_btn.configure(state=state)
         for r in self.rows:
             r["btn"].configure(state=state)
+            r["play"].configure(state=state)
 
     def poll_queue(self):
         try:
@@ -223,6 +271,10 @@ class App:
                     idx = payload
                     if 0 <= idx < len(self.rows):
                         self.rows[idx]["btn"].configure(state="normal", text="重新")
+                elif kind == "play_reset":
+                    idx = payload
+                    if 0 <= idx < len(self.rows):
+                        self.rows[idx]["play"].configure(state="normal", text="▶ 唸")
                 elif kind == "done":
                     self.set_busy(False)
         except queue.Empty:
@@ -271,6 +323,9 @@ class App:
             btn = ttk.Button(left, text="重新", width=5,
                              command=lambda i=idx: self.retranslate(i))
             btn.pack(pady=(2, 0))
+            play = ttk.Button(left, text="▶ 唸", width=5,
+                              command=lambda i=idx: self.play_row(i))
+            play.pack(pady=(2, 0))
 
             zh_e = tk.Entry(f, font=("", 12))
             zh_e.insert(0, zh)
@@ -281,7 +336,8 @@ class App:
             f.columnconfigure(1, weight=1)
 
             ttk.Separator(self.rows_frame).pack(fill="x", pady=2)
-            self.rows.append({"var": var, "zh": zh_e, "tr": tr_e, "btn": btn, "frame": f})
+            self.rows.append({"var": var, "zh": zh_e, "tr": tr_e,
+                              "btn": btn, "play": play, "frame": f})
         self.canvas.yview_moveto(0)
 
     # ---------- 步驟一：翻譯全部 ----------
@@ -320,6 +376,58 @@ class App:
                 self.log(f"✗ 翻譯中斷：{e}")
             finally:
                 self.msg_q.put(("done", None))
+        threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 語音合成（含快取） ----------
+    def get_audio(self, eth, speaker, text, session=None):
+        """取得該句語音的 WAV bytes；唸過／匯出過的句子直接用快取，不重新合成。"""
+        key = (speaker, text)
+        if key in self.audio_cache:
+            return self.audio_cache[key]
+        if len(text) > 300:
+            raise RuntimeError("文字超過 300 字元上限")
+        if session is None:
+            session = uuid.uuid4().hex
+            gradio_call(TTS_APP, "lambda", [eth], session)
+        out = gradio_call(TTS_APP, "default_speaker_tts", [speaker, text], session)
+        url = out[0]["url"]
+        with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
+            data = r.read()
+        self.audio_cache[key] = data
+        return data
+
+    # ---------- 單句試聽 ----------
+    def play_row(self, idx):
+        if self.running:
+            return
+        tr = self.rows[idx]["tr"].get().strip()
+        if not tr:
+            messagebox.showwarning("提示", "這一行還沒有翻譯文字")
+            return
+        if not self.spk_cb.get() or self.spk_cb.get() == "載入中…":
+            messagebox.showwarning("提示", "配音員尚未載入完成")
+            return
+        eth, _, speaker = self.current_selection()
+
+        play_btn = self.rows[idx]["play"]
+        play_btn.configure(state="disabled", text="…")
+
+        def worker():
+            try:
+                cached = (speaker, tr) in self.audio_cache
+                if not cached:
+                    self.log(f"第 {idx + 1} 行合成中（約 5~20 秒）：{tr}")
+                data = self.get_audio(eth, speaker, tr)
+                tmp = self.tmpdir / (sanitize(tr) + ".wav")
+                tmp.write_bytes(data)
+                if play_wav_file(tmp):
+                    self.log(f"▶ 播放第 {idx + 1} 行：{tr}")
+                else:
+                    self.log(f"✗ 找不到可用的播放器，音檔在：{tmp}")
+            except Exception as e:
+                self.log(f"✗ 第 {idx + 1} 行試聽失敗：{e}")
+            finally:
+                self.msg_q.put(("play_reset", idx))
         threading.Thread(target=worker, daemon=True).start()
 
     # ---------- 單行重翻 ----------
@@ -393,14 +501,10 @@ class App:
                 for n, (row_no, zh, tr) in enumerate(items, 1):
                     try:
                         if not text_only:
-                            if len(tr) > 300:
-                                raise RuntimeError("翻譯超過 300 字元上限")
                             self.log(f"[{n}/{len(items)}] 第 {row_no} 行合成中：{tr}")
-                            out = gradio_call(TTS_APP, "default_speaker_tts", [speaker, tr], sess)
-                            url = out[0]["url"]
+                            data = self.get_audio(eth, speaker, tr, session=sess)
                             dest = outdir / (sanitize(tr) + ".wav")
-                            with urllib.request.urlopen(url, context=CTX, timeout=120) as r:
-                                dest.write_bytes(r.read())
+                            dest.write_bytes(data)
                             self.log(f"    ✓ 音檔：{dest.name}")
                         ok += 1
                     except Exception as e:
@@ -418,6 +522,55 @@ class App:
                 self.log(f"—— 匯出完成：成功 {ok} 句、失敗 {fail} 句，檔案在 {outdir} ——")
             except Exception as e:
                 self.log(f"✗ 匯出中斷：{e}")
+            finally:
+                self.msg_q.put(("done", None))
+        threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 串接匯出：全部句子合成一個音檔 ----------
+    def export_merged(self):
+        if self.running:
+            return
+        items = []  # (列號, 翻譯)
+        for i, r in enumerate(self.rows):
+            tr = r["tr"].get().strip()
+            if tr:
+                items.append((i + 1, tr))
+        if not items:
+            messagebox.showwarning("提示", "編輯區還沒有可合成的翻譯，請先執行步驟一")
+            return
+        if not self.spk_cb.get() or self.spk_cb.get() == "載入中…":
+            messagebox.showwarning("提示", "配音員尚未載入完成")
+            return
+
+        eth, _, speaker = self.current_selection()
+        outdir = Path(self.outdir_var.get())
+        outdir.mkdir(parents=True, exist_ok=True)
+
+        self.set_busy(True)
+        self.msg_q.put(("progress", (0, len(items))))
+
+        def worker():
+            try:
+                sess = uuid.uuid4().hex
+                gradio_call(TTS_APP, "lambda", [eth], sess)  # 解鎖配音員，一次即可
+
+                blobs = []
+                for n, (row_no, tr) in enumerate(items, 1):
+                    self.log(f"[{n}/{len(items)}] 第 {row_no} 行合成中：{tr}")
+                    blobs.append(self.get_audio(eth, speaker, tr, session=sess))
+                    self.msg_q.put(("progress", (n, len(items))))
+
+                merged = merge_wavs(blobs, gap_seconds=0.4)
+                first = sanitize(items[0][1])[:20]
+                dest = outdir / f"串接語音_{first}_共{len(items)}句.wav"
+                dest.write_bytes(merged)
+
+                with wave.open(io.BytesIO(merged)) as w:
+                    secs = w.getnframes() / w.getframerate()
+                self.log(f"✓ 串接完成：{dest.name}（{len(items)} 句、約 {secs:.1f} 秒）")
+                self.log(f"—— 檔案在 {outdir} ——")
+            except Exception as e:
+                self.log(f"✗ 串接匯出失敗：{e}")
             finally:
                 self.msg_q.put(("done", None))
         threading.Thread(target=worker, daemon=True).start()
