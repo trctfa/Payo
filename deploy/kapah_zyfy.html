@@ -1,0 +1,1115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>族語隨身譯 · Kapah</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, sans-serif;
+      background: #f5f5f4; /* stone-100，對齊 Kapah 登入頁色調 */
+      color: #292524;
+      min-height: 100vh;
+    }
+    .zyfy-page-head {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 16px 8px;
+    }
+    .zyfy-page-head a {
+      color: #b45309;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .zyfy-page-head h1 {
+      margin: 10px 0 6px;
+      font-size: 26px;
+      letter-spacing: .02em;
+    }
+    .zyfy-page-head p {
+      margin: 0;
+      color: #78716c;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    /* 小工具本體在深色卡片裡，與淺色站內頁面形成對比 */
+    #zyfy-tool { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="zyfy-page-head">
+    <a href="/">← 回到 Kapah</a>
+    <h1>族語隨身譯</h1>
+    <p>中文翻譯成族語、逐句編輯、試聽、匯出音檔／對照文字檔，並可查族語 E 樂園字典。需登入後使用。</p>
+  </div>
+
+<!-- ============================================================
+     族語隨身譯：嵌入版小工具（編輯版）
+     用法：把這整段（從這行註解到最後的 </script>）貼進你網站
+     編輯器的「自訂 HTML」區塊即可。樣式只作用在小工具內部，
+     不會影響你網站原本的版面。
+     服務由原住民族語言研究發展基金會 AI 實驗室提供。
+     ============================================================ -->
+<div id="zyfy-tool">
+  <h2 class="zyfy-title">中文 → 族語翻譯工作台</h2>
+
+  <div class="zyfy-selects">
+    <div class="zyfy-field">
+      <label for="zyfy-eth">族別</label>
+      <select id="zyfy-eth">
+        <option>阿美</option><option>泰雅</option><option>排灣</option><option>布農</option>
+        <option>卑南</option><option>魯凱</option><option>鄒</option><option>賽夏</option>
+        <option>雅美</option><option>邵</option><option>噶瑪蘭</option><option>太魯閣</option>
+        <option>撒奇萊雅</option><option>賽德克</option><option>拉阿魯哇</option><option>卡那卡那富</option>
+      </select>
+    </div>
+    <div class="zyfy-field">
+      <label for="zyfy-lang">語別</label>
+      <select id="zyfy-lang"><option>載入中…</option></select>
+    </div>
+    <div class="zyfy-field">
+      <label for="zyfy-spk">配音員</label>
+      <select id="zyfy-spk"><option>載入中…</option></select>
+    </div>
+  </div>
+
+  <textarea id="zyfy-input" maxlength="4000" placeholder="貼上中文文章，一行一句。&#10;例如：&#10;早安&#10;謝謝你&#10;我們明天見"></textarea>
+
+  <button type="button" class="zyfy-run" id="zyfy-translate">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+    <span>翻譯全部句子 → 進入編輯區</span>
+  </button>
+
+  <div class="zyfy-status" id="zyfy-status"></div>
+
+  <div class="zyfy-project-bar">
+    <button type="button" class="zyfy-ghost" id="zyfy-save-proj" title="把目前的句子與翻譯存成專案檔，下次可再編輯">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      <span>儲存專案</span>
+    </button>
+    <button type="button" class="zyfy-ghost" id="zyfy-open-proj" title="開啟之前存的專案檔繼續編輯">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span>開啟專案</span>
+    </button>
+  </div>
+  <input type="file" id="zyfy-proj-file" accept=".json,application/json" style="display:none">
+
+  <div class="zyfy-editor" id="zyfy-editor">
+    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻、▶ 唸、⭳ 下載、📖 查字典、✕ 刪除；勾選後可「匯出勾選」或「刪除勾選」。</div>
+    <div id="zyfy-rows"></div>
+
+    <div class="zyfy-sel-bar">
+      <button type="button" class="zyfy-ghost" id="zyfy-select-all" title="勾選全部句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>全選</span>
+      </button>
+      <button type="button" class="zyfy-ghost" id="zyfy-clear-sel" title="取消全部勾選">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8"/></svg>
+        <span>清除勾選</span>
+      </button>
+      <button type="button" class="zyfy-ghost zyfy-danger" id="zyfy-delete-sel" title="刪除打勾的句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        <span>刪除勾選</span>
+      </button>
+    </div>
+
+    <label class="zyfy-textonly">
+      <input type="checkbox" id="zyfy-text-only"> 匯出時只存對照文字檔，不合成語音
+    </label>
+
+    <div class="zyfy-export-bar">
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-export-all" title="每句一個音檔＋對照文字檔">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+        <span>匯出全部</span>
+      </button>
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-export-sel" title="只匯出打勾的句子">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/><path d="M12 21H4V3h12v6"/></svg>
+        <span>匯出勾選</span>
+      </button>
+      <button type="button" class="zyfy-run zyfy-alt2" id="zyfy-export-merge" title="把全部句子的語音接成一個檔">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
+        <span>串接成一個語音檔</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Klokah 查字典面板 -->
+  <div class="zyfy-dict" id="zyfy-dict" hidden>
+    <div class="zyfy-dict-head">
+      <strong>族語 E 樂園 · 查字典</strong>
+      <button type="button" class="zyfy-icon" id="zyfy-dict-close" title="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="zyfy-dict-search">
+      <input type="text" id="zyfy-dict-q" placeholder="輸入中文或族語單字／句子">
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-dict-go" style="width:auto;padding:10px 16px;flex:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>查詢</span>
+      </button>
+    </div>
+    <div class="zyfy-dict-meta" id="zyfy-dict-meta"></div>
+    <div class="zyfy-dict-list" id="zyfy-dict-list"></div>
+    <div class="zyfy-dict-foot">資料來源：
+      <a href="https://web.klokah.tw/" target="_blank" rel="noopener">族語 E 樂園</a>
+      （<a href="https://web.klokah.tw/api/" target="_blank" rel="noopener">公開 API</a>）
+    </div>
+  </div>
+
+  <div class="zyfy-credit">
+    翻譯與語音合成服務由
+    <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a> 提供；
+    字典查詢串接
+    <a href="https://web.klokah.tw/" target="_blank" rel="noopener">族語 E 樂園</a>
+  </div>
+</div>
+
+<style>
+/* 所有規則都以 #zyfy-tool 開頭，只作用在小工具內部 */
+#zyfy-tool {
+  --zyfy-card: #1e293b;
+  --zyfy-card-2: #273449;
+  --zyfy-text: #e2e8f0;
+  --zyfy-muted: #94a3b8;
+  --zyfy-accent: #38bdf8;
+  --zyfy-accent-2: #818cf8;
+  --zyfy-ok: #34d399;
+  --zyfy-err: #f87171;
+  box-sizing: border-box;
+  max-width: 720px;
+  margin: 24px auto;
+  background: var(--zyfy-card);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.15);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  font-family: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: left;
+}
+#zyfy-tool * { box-sizing: border-box; margin: 0; padding: 0; }
+#zyfy-tool .zyfy-title { font-size: 22px; font-weight: 700; margin-bottom: 18px; color: var(--zyfy-text); }
+#zyfy-tool .zyfy-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
+#zyfy-tool .zyfy-field label { display: block; font-size: 13px; color: var(--zyfy-muted); margin-bottom: 5px; }
+#zyfy-tool select, #zyfy-tool textarea, #zyfy-tool input[type="text"] {
+  width: 100%;
+  background: var(--zyfy-card-2);
+  color: var(--zyfy-text);
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+}
+#zyfy-tool select:focus, #zyfy-tool textarea:focus, #zyfy-tool input[type="text"]:focus { outline: 2px solid var(--zyfy-accent); border-color: transparent; }
+#zyfy-tool textarea { resize: vertical; min-height: 96px; margin-bottom: 14px; }
+
+#zyfy-tool .zyfy-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #0b1220;
+  background: linear-gradient(90deg, var(--zyfy-accent), var(--zyfy-accent-2));
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-run svg { width: 20px; height: 20px; flex: none; }
+#zyfy-tool .zyfy-run.zyfy-alt { background: linear-gradient(90deg, #34d399, #38bdf8); }
+#zyfy-tool .zyfy-run.zyfy-alt2 { background: linear-gradient(90deg, #f0abfc, #818cf8); }
+#zyfy-tool .zyfy-run:hover:not(:disabled) { filter: brightness(1.1); }
+#zyfy-tool .zyfy-run:disabled { opacity: .55; cursor: wait; }
+
+#zyfy-tool .zyfy-status { margin-top: 12px; font-size: 14px; color: var(--zyfy-accent); min-height: 21px; }
+#zyfy-tool .zyfy-status.zyfy-err { color: var(--zyfy-err); }
+
+#zyfy-tool .zyfy-editor { display: none; margin-top: 14px; }
+#zyfy-tool .zyfy-editor.zyfy-show { display: block; }
+#zyfy-tool .zyfy-editor-hint { font-size: 13px; color: var(--zyfy-muted); margin-bottom: 10px; }
+#zyfy-tool #zyfy-rows { max-height: 420px; overflow-y: auto; margin-bottom: 12px; }
+
+#zyfy-tool .zyfy-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148,163,184,.15);
+}
+#zyfy-tool .zyfy-row:last-child { border-bottom: 0; }
+#zyfy-tool .zyfy-row-side {
+  display: grid;
+  grid-template-columns: repeat(2, 32px);
+  grid-auto-rows: 32px;
+  gap: 6px;
+  align-content: start;
+  flex: none;
+}
+#zyfy-tool .zyfy-row-side input[type="checkbox"] {
+  width: 18px; height: 18px; margin: 7px; accent-color: var(--zyfy-ok); cursor: pointer;
+}
+#zyfy-tool .zyfy-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(148,163,184,.3);
+  border-radius: 8px;
+  background: var(--zyfy-card-2);
+  color: var(--zyfy-text);
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-icon svg { width: 16px; height: 16px; }
+#zyfy-tool .zyfy-icon:hover:not(:disabled) { border-color: var(--zyfy-accent); color: var(--zyfy-accent); }
+#zyfy-tool .zyfy-icon:disabled { opacity: .4; cursor: wait; }
+#zyfy-tool .zyfy-icon.zyfy-busy svg { animation: zyfy-spin 1s linear infinite; }
+@keyframes zyfy-spin { to { transform: rotate(360deg); } }
+#zyfy-tool .zyfy-row-main { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#zyfy-tool .zyfy-row-main .zyfy-tr { color: var(--zyfy-ok); font-weight: 700; }
+
+#zyfy-tool .zyfy-project-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+#zyfy-tool .zyfy-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 12px;
+  padding: 10px;
+  background: transparent;
+  color: var(--zyfy-muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+#zyfy-tool .zyfy-ghost svg { width: 17px; height: 17px; }
+#zyfy-tool .zyfy-ghost:hover:not(:disabled) { border-color: var(--zyfy-accent); color: var(--zyfy-accent); }
+#zyfy-tool .zyfy-ghost:disabled { opacity: .5; cursor: wait; }
+#zyfy-tool .zyfy-ghost.zyfy-danger:hover:not(:disabled) { border-color: var(--zyfy-err); color: var(--zyfy-err); }
+#zyfy-tool .zyfy-sel-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+#zyfy-tool .zyfy-icon.zyfy-del:hover:not(:disabled) { border-color: var(--zyfy-err); color: var(--zyfy-err); }
+#zyfy-tool .zyfy-textonly { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--zyfy-muted); margin-bottom: 10px; cursor: pointer; }
+#zyfy-tool .zyfy-textonly input { width: 16px; height: 16px; accent-color: var(--zyfy-ok); }
+#zyfy-tool .zyfy-export-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+#zyfy-tool .zyfy-credit { margin-top: 16px; font-size: 12px; color: var(--zyfy-muted); text-align: center; }
+#zyfy-tool .zyfy-credit a { color: var(--zyfy-accent); text-decoration: none; }
+
+/* ---------- 查字典面板 ---------- */
+#zyfy-tool .zyfy-dict {
+  margin-top: 14px;
+  background: var(--zyfy-card-2);
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 12px;
+  padding: 14px;
+}
+#zyfy-tool .zyfy-dict[hidden] { display: none !important; }
+#zyfy-tool .zyfy-dict-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; color: var(--zyfy-text);
+}
+#zyfy-tool .zyfy-dict-search { display: flex; gap: 8px; margin-bottom: 8px; }
+#zyfy-tool .zyfy-dict-search input { flex: 1; }
+#zyfy-tool .zyfy-dict-meta { font-size: 13px; color: var(--zyfy-muted); margin-bottom: 8px; min-height: 18px; }
+#zyfy-tool .zyfy-dict-list { max-height: 280px; overflow-y: auto; }
+#zyfy-tool .zyfy-dict-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.15);
+}
+#zyfy-tool .zyfy-dict-item:last-child { border-bottom: 0; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-main { flex: 1; min-width: 0; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-native { color: var(--zyfy-ok); font-weight: 700; word-break: break-word; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-zh { color: var(--zyfy-text); font-size: 14px; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-src { color: var(--zyfy-muted); font-size: 12px; margin-top: 2px; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-src a { color: var(--zyfy-accent); text-decoration: none; }
+#zyfy-tool .zyfy-dict-item .zyfy-apply {
+  flex: none; border: 0; border-radius: 8px; padding: 7px 12px;
+  background: var(--zyfy-ok); color: #06281c; font-weight: 700;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+}
+#zyfy-tool .zyfy-dict-item .zyfy-apply:hover { filter: brightness(1.1); }
+#zyfy-tool .zyfy-dict-foot { margin-top: 10px; font-size: 12px; color: var(--zyfy-muted); }
+#zyfy-tool .zyfy-dict-foot a { color: var(--zyfy-accent); text-decoration: none; }
+#zyfy-tool .zyfy-row.zyfy-active {
+  background: rgba(56,189,248,.08);
+  border-radius: 8px;
+  margin: 0 -6px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  // 等元件出現才初始化：有些網站編輯器會把 script 移到頁首或延後渲染內容
+  let zyfyTries = 0;
+  function zyfyBoot() {
+    if (document.getElementById('zyfy-eth')) {
+      try { zyfyInit(); } catch (e) {
+        console.error('【族語隨身譯】初始化失敗:', e);
+        const st = document.getElementById('zyfy-status');
+        if (st) { st.textContent = '初始化失敗：' + e.message; st.className = 'zyfy-status zyfy-err'; }
+      }
+      return;
+    }
+    if (++zyfyTries < 40) setTimeout(zyfyBoot, 500);   // 最多等 20 秒
+    else console.error('【族語隨身譯】找不到小工具的 HTML 元件，可能被編輯器移除或改寫。');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', zyfyBoot);
+  } else {
+    zyfyBoot();
+  }
+
+  function zyfyInit() {
+
+  const TRANSLATE_APP = 'https://ai-labs.ilrdf.org.tw/kari-seejiq-tnpusu-ai-hmjil';
+  const TTS_APP       = 'https://ai-labs.ilrdf.org.tw/hnang-kari-ai-asi-sluhay';
+  const DEFAULT_LANG_LABEL = '阿美_南勢';
+  const DEFAULT_SPEAKER = '阿美_南勢_女聲';
+
+  const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>';
+  const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>';
+  const ICON_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+  const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+
+  // 你的語別標籤 → Klokah 方言編號（官方 API https://web.klokah.tw/api/）
+  const KLOKAH_DIALECT = {
+    '阿美_南勢': 1, '阿美_秀姑巒': 2, '阿美_海岸': 3, '阿美_馬蘭': 4, '阿美_恆春': 5,
+    '泰雅_賽考利克': 6, '泰雅_澤敖利': 7, '泰雅_汶水': 8, '泰雅_萬大': 9,
+    '泰雅_四季': 10, '泰雅_宜蘭澤敖利': 11,
+    '賽夏': 13, '邵': 14,
+    '賽德克_都達': 15, '賽德克_德固達雅': 16, '賽德克_德鹿谷': 17,
+    '布農_卓群': 18, '布農_卡群': 19, '布農_丹群': 20, '布農_巒群': 21, '布農_郡群': 22,
+    '排灣_東': 23, '排灣_北': 24, '排灣_中': 25, '排灣_南': 26,
+    '魯凱_東': 27, '魯凱_霧台': 28, '魯凱_大武': 29, '魯凱_多納': 30, '魯凱_茂林': 31, '魯凱_萬山': 32,
+    '太魯閣': 33, '噶瑪蘭': 34, '鄒': 35,
+    '卡那卡那富': 36, '拉阿魯哇': 37,
+    '卑南_南王': 38, '卑南_知本': 39, '卑南_西群': 40, '卑南_建和': 41,
+    '雅美': 42, '撒奇萊雅': 43
+  };
+  const KLOKAH_SRC_NAME = {
+    alphabet: '字母篇', conversation: '生活會話', speech: '句型篇', nine: '九階教材',
+    twelve: '十二年國教教材', vocabulary: '千詞表', custom: '自訂辭典',
+    song: '歌謠篇', picture: '圖畫故事', read: '閱讀書寫', culture: '文化篇',
+    dialogue: '情境族語', essay: '族語短文', readingtext: '閱讀文本'
+  };
+
+  const $ = (id) => document.getElementById('zyfy-' + id);
+  const toolEl = document.getElementById('zyfy-tool');
+  const ethSel = $('eth'), langSel = $('lang'), spkSel = $('spk');
+  const inputBox = $('input'), statusEl = $('status');
+  const translateBtn = $('translate'), editorEl = $('editor'), rowsEl = $('rows');
+  const textOnlyCb = $('text-only');
+  const exportAllBtn = $('export-all'), exportSelBtn = $('export-sel'), exportMergeBtn = $('export-merge');
+  const saveProjBtn = $('save-proj'), openProjBtn = $('open-proj'), projFileInput = $('proj-file');
+  const selectAllBtn = $('select-all'), clearSelBtn = $('clear-sel'), deleteSelBtn = $('delete-sel');
+  const dictPanel = $('dict'), dictQ = $('dict-q'), dictGo = $('dict-go');
+  const dictMeta = $('dict-meta'), dictList = $('dict-list'), dictClose = $('dict-close');
+
+  const audioCache = new Map();   // 「配音員\u0000文字」-> wav Blob（唸過就不重新合成）
+  const AUTO_KEY = 'zyfy_autosave_v1';
+  let sharedPlayer = null;
+  let pendingProject = null;   // 開啟專案時暫存，等選項載入完再套用
+  let suppressAutosave = false;
+  let dictTargetRow = null;    // 目前查字典對應的編輯列
+
+  function status(text, isErr) {
+    statusEl.textContent = text;
+    statusEl.className = 'zyfy-status' + (isErr ? ' zyfy-err' : '');
+  }
+
+  function setBusy(busy) {
+    toolEl.dataset.busy = busy ? '1' : '0';
+    for (const b of [translateBtn, exportAllBtn, exportSelBtn, exportMergeBtn,
+                     saveProjBtn, openProjBtn, selectAllBtn, clearSelBtn, deleteSelBtn]) {
+      if (b) b.disabled = busy;
+    }
+    for (const b of rowsEl.querySelectorAll('button')) b.disabled = busy;
+  }
+  const isBusy = () => toolEl.dataset.busy === '1';
+
+  // ---------- Gradio API ----------
+  const configCache = {};
+  async function getFnIndex(appBase, apiName) {
+    if (!configCache[appBase]) {
+      configCache[appBase] = await (await fetch(appBase + '/config')).json();
+    }
+    const dep = configCache[appBase].dependencies.find(d => d.api_name === apiName);
+    if (!dep) throw new Error('找不到 API：' + apiName);
+    return dep.id;
+  }
+
+  const newSession = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+  async function gradioCall(appBase, apiName, data, sessionHash) {
+    const fnIndex = await getFnIndex(appBase, apiName);
+
+    // 順序很重要：先送 queue/join（伺服器會暫存結果），再開 SSE 監聽。
+    const res = await fetch(appBase + '/gradio_api/queue/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, fn_index: fnIndex, session_hash: sessionHash })
+    });
+    if (!res.ok) throw new Error('排隊失敗 HTTP ' + res.status);
+
+    return new Promise((resolve, reject) => {
+      const es = new EventSource(appBase + '/gradio_api/queue/data?session_hash=' + sessionHash);
+      const timer = setTimeout(() => fail(new Error(apiName + ' 等待逾時')), 180000);
+      function fail(err) { clearTimeout(timer); es.close(); reject(err); }
+
+      es.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg === 'process_completed') {
+          clearTimeout(timer);
+          es.close();
+          if (msg.success === false) reject(new Error(apiName + ' 後端處理失敗'));
+          else resolve(msg.output.data);
+        }
+      };
+      es.onerror = () => fail(new Error(apiName + ' 連線中斷'));
+    });
+  }
+
+  // 翻譯前必須用同一 session 先呼叫 lambda_1 解鎖該族別的語別選項
+  async function translateOne(langCode, text, session) {
+    let sess = session;
+    if (!sess) {
+      sess = newSession();
+      await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
+    }
+    const out = await gradioCall(TRANSLATE_APP, 'translate_1', [text, 'zho_Hant', langCode], sess);
+    return (out[0] || '').trim();
+  }
+
+  // 取得語音（含快取）
+  async function getAudio(speaker, text, session) {
+    const key = speaker + '\u0000' + text;
+    if (audioCache.has(key)) return audioCache.get(key);
+    if (text.length > 300) throw new Error('文字超過 300 字元上限');
+    let sess = session;
+    if (!sess) {
+      sess = newSession();
+      await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);
+    }
+    const out = await gradioCall(TTS_APP, 'default_speaker_tts', [speaker, text], sess);
+    const file = out[0];
+    if (!file || !file.url) throw new Error('合成結果沒有音檔');
+    const blob = await (await fetch(file.url)).blob();
+    audioCache.set(key, blob);
+    return blob;
+  }
+
+  function sanitizeFilename(name) {
+    name = (name || '').replace(/[\\\/:\*\?"<>\|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name.length > 60) name = name.slice(0, 60).trim();
+    return name || 'tts_audio';
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  function timeStamp() {
+    const d = new Date();
+    return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') +
+           '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  // ---------- WAV 串接（純前端，不需任何套件） ----------
+  function wavChunks(buf) {
+    const dv = new DataView(buf);
+    let off = 12, fmt = null, data = null;
+    while (off + 8 <= dv.byteLength) {
+      const id = String.fromCharCode(dv.getUint8(off), dv.getUint8(off + 1), dv.getUint8(off + 2), dv.getUint8(off + 3));
+      const size = dv.getUint32(off + 4, true);
+      if (id === 'fmt ') fmt = { channels: dv.getUint16(off + 10, true), rate: dv.getUint32(off + 12, true), bits: dv.getUint16(off + 22, true) };
+      if (id === 'data') { data = { offset: off + 8, size }; break; }
+      off += 8 + size + (size % 2);
+    }
+    if (!fmt || !data) throw new Error('WAV 格式解析失敗');
+    return { fmt, data };
+  }
+
+  async function mergeWavBlobs(blobs, gapSeconds) {
+    const bufs = [];
+    for (const b of blobs) bufs.push(await b.arrayBuffer());
+    const { fmt } = wavChunks(bufs[0]);
+    const bytesPerFrame = fmt.channels * fmt.bits / 8;
+    const gapBytes = Math.floor(fmt.rate * gapSeconds) * bytesPerFrame;
+
+    const parts = [];
+    let total = 0;
+    bufs.forEach((buf, i) => {
+      const { data } = wavChunks(buf);
+      if (i > 0 && gapBytes) { parts.push(new Uint8Array(gapBytes)); total += gapBytes; }
+      parts.push(new Uint8Array(buf, data.offset, data.size));
+      total += data.size;
+    });
+
+    const header = new ArrayBuffer(44);
+    const dv = new DataView(header);
+    const wstr = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    wstr(0, 'RIFF'); dv.setUint32(4, 36 + total, true); wstr(8, 'WAVE');
+    wstr(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
+    dv.setUint16(22, fmt.channels, true); dv.setUint32(24, fmt.rate, true);
+    dv.setUint32(28, fmt.rate * bytesPerFrame, true); dv.setUint16(32, bytesPerFrame, true); dv.setUint16(34, fmt.bits, true);
+    wstr(36, 'data'); dv.setUint32(40, total, true);
+    return new Blob([header, ...parts], { type: 'audio/wav' });
+  }
+
+  // ---------- 選項載入 ----------
+  async function loadOptions() {
+    status('載入語別與配音員…');
+    langSel.innerHTML = spkSel.innerHTML = '';
+    try {
+      const [langData, spkData] = await Promise.all([
+        gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], newSession()),
+        gradioCall(TTS_APP, 'lambda', [ethSel.value], newSession())
+      ]);
+      for (const [label, code] of langData[0].choices) langSel.add(new Option(label, code));
+      for (const [label] of spkData[0].choices) spkSel.add(new Option(label, label));
+      // 預設選擇：阿美_南勢／阿美_南勢_女聲（清單裡沒有就維持第一個）
+      const defLang = langData[0].choices.find(c => c[0] === DEFAULT_LANG_LABEL);
+      if (defLang) langSel.value = defLang[1];
+      if ([...spkSel.options].some(o => o.value === DEFAULT_SPEAKER)) spkSel.value = DEFAULT_SPEAKER;
+
+      // 開啟專案／自動復原：選項載入完再套用內容
+      if (pendingProject) {
+        const p = pendingProject;
+        pendingProject = null;
+        applyProjectData(p, langData[0].choices, spkData[0].choices);
+      } else {
+        status('');
+      }
+    } catch (err) {
+      status('載入選項失敗：' + err.message, true);
+    }
+  }
+  ethSel.addEventListener('change', () => {
+    scheduleAutosave();
+    loadOptions();
+  });
+
+  // ---------- 編輯區 ----------
+  function addRow(zh, tr) {
+    const row = document.createElement('div');
+    row.className = 'zyfy-row';
+    row.innerHTML =
+      '<div class="zyfy-row-side">' +
+        '<input type="checkbox" class="zyfy-check" title="勾選後可匯出勾選或刪除勾選">' +
+        '<button type="button" class="zyfy-icon zyfy-re" title="重新翻譯這一句">' + ICON_RETRY + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-play" title="唸這一句">' + ICON_PLAY + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-dl1" title="下載這一句的音檔">' + ICON_DL + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-dict-btn" title="查字典（族語E樂園）">' + ICON_BOOK + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-del" title="刪除這一句">' + ICON_DEL + '</button>' +
+      '</div>' +
+      '<div class="zyfy-row-main">' +
+        '<input type="text" class="zyfy-zh" placeholder="中文">' +
+        '<input type="text" class="zyfy-tr" placeholder="族語翻譯">' +
+      '</div>';
+    row.querySelector('.zyfy-zh').value = zh;
+    row.querySelector('.zyfy-tr').value = tr;
+    row.querySelector('.zyfy-zh').addEventListener('input', scheduleAutosave);
+    row.querySelector('.zyfy-tr').addEventListener('input', scheduleAutosave);
+    row.querySelector('.zyfy-check').addEventListener('change', scheduleAutosave);
+
+    // ↻ 重新翻譯這一句
+    row.querySelector('.zyfy-re').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const zhNow = row.querySelector('.zyfy-zh').value.trim();
+      if (!zhNow) { status('這一行的中文是空的', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        status('重新翻譯：' + zhNow);
+        const native = await translateOne(langSel.value, zhNow);
+        row.querySelector('.zyfy-tr').value = native;
+        status('重新翻譯完成：' + native);
+        scheduleAutosave();
+      } catch (err) {
+        status('重翻失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
+
+    // ▶ 唸這一句
+    row.querySelector('.zyfy-play').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const tr2 = row.querySelector('.zyfy-tr').value.trim();
+      if (!tr2) { status('這一行還沒有翻譯文字', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        const cached = audioCache.has(spkSel.value + '\u0000' + tr2);
+        if (!cached) status('合成語音中（約 5～20 秒）：' + tr2);
+        const blob = await getAudio(spkSel.value, tr2);
+        if (sharedPlayer) { sharedPlayer.pause(); }
+        sharedPlayer = new Audio(URL.createObjectURL(blob));
+        await sharedPlayer.play();
+        status('▶ 播放：' + tr2);
+      } catch (err) {
+        status('試聽失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
+
+    // ⭳ 下載這一句
+    row.querySelector('.zyfy-dl1').addEventListener('click', async (ev) => {
+      if (isBusy()) return;
+      const btn = ev.currentTarget;
+      const tr2 = row.querySelector('.zyfy-tr').value.trim();
+      if (!tr2) { status('這一行還沒有翻譯文字', true); return; }
+      btn.disabled = true; btn.classList.add('zyfy-busy');
+      try {
+        const cached = audioCache.has(spkSel.value + '\u0000' + tr2);
+        if (!cached) status('合成語音中（約 5～20 秒）：' + tr2);
+        const blob = await getAudio(spkSel.value, tr2);
+        downloadBlob(blob, sanitizeFilename(tr2) + '.wav');
+        status('已下載：' + sanitizeFilename(tr2) + '.wav');
+      } catch (err) {
+        status('下載失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false; btn.classList.remove('zyfy-busy');
+      }
+    });
+
+    // ✕ 刪除這一句
+    row.querySelector('.zyfy-del').addEventListener('click', () => {
+      if (isBusy()) return;
+      row.remove();
+      if (dictTargetRow === row) closeDict();
+      if (!rowsEl.querySelector('.zyfy-row')) editorEl.classList.remove('zyfy-show');
+      status('已刪除 1 句，剩餘 ' + rowsEl.querySelectorAll('.zyfy-row').length + ' 句');
+      scheduleAutosave();
+    });
+
+    // 📖 查字典
+    row.querySelector('.zyfy-dict-btn').addEventListener('click', () => {
+      if (isBusy()) return;
+      openDictForRow(row);
+    });
+
+    rowsEl.appendChild(row);
+  }
+
+  function collectRows(selectedOnly) {
+    const items = [];
+    for (const row of rowsEl.querySelectorAll('.zyfy-row')) {
+      if (selectedOnly && !row.querySelector('.zyfy-check').checked) continue;
+      const zh = row.querySelector('.zyfy-zh').value.trim();
+      const tr = row.querySelector('.zyfy-tr').value.trim();
+      if (zh && tr) items.push({ zh, tr });
+    }
+    return items;
+  }
+
+  // ---------- 翻譯全部 ----------
+  translateBtn.addEventListener('click', async () => {
+    const lines = inputBox.value.split('\n').map(s => s.trim()).filter(s => s);
+    if (!lines.length) { status('請先貼上中文（一行一句）', true); return; }
+    if (!langSel.value) { status('語別尚未載入完成', true); return; }
+
+    setBusy(true);
+    rowsEl.innerHTML = '';
+    editorEl.classList.remove('zyfy-show');
+    try {
+      // 整批共用同一個 session：解鎖一次族別即可
+      const sess = newSession();
+      await gradioCall(TRANSLATE_APP, 'lambda_1', [ethSel.value], sess);
+
+      for (let i = 0; i < lines.length; i++) {
+        status('翻譯中（' + (i + 1) + '/' + lines.length + '）：' + lines[i]);
+        let native = '';
+        try {
+          native = await translateOne(langSel.value, lines[i], sess);
+        } catch (err) {
+          console.error(err);
+        }
+        addRow(lines[i], native);
+        editorEl.classList.add('zyfy-show');
+      }
+      status('翻譯完成，共 ' + lines.length + ' 句。可在編輯區修改文字、逐句重翻或試聽，再匯出。');
+      scheduleAutosave();
+    } catch (err) {
+      console.error(err);
+      status('失敗：' + err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  // ---------- 專案：儲存／開啟／自動復原（與 GUI 通用 JSON） ----------
+  function snapshotProject() {
+    const rows = [];
+    for (const row of rowsEl.querySelectorAll('.zyfy-row')) {
+      rows.push({
+        zh: row.querySelector('.zyfy-zh').value,
+        tr: row.querySelector('.zyfy-tr').value,
+        checked: !!row.querySelector('.zyfy-check').checked
+      });
+    }
+    return {
+      app: 'zyfy-project',
+      version: 1,
+      ethnicity: ethSel.value,
+      lang_label: langSel.selectedOptions[0] ? langSel.selectedOptions[0].text : '',
+      speaker: spkSel.value,
+      input: inputBox.value,
+      text_only: !!textOnlyCb.checked,
+      rows: rows
+    };
+  }
+
+  function applyProjectData(p, langChoices, spkChoices) {
+    suppressAutosave = true;
+    try {
+      if (p.lang_label) {
+        const hit = (langChoices || []).find(c => c[0] === p.lang_label);
+        if (hit) langSel.value = hit[1];
+      }
+      if (p.speaker && [...spkSel.options].some(o => o.value === p.speaker)) {
+        spkSel.value = p.speaker;
+      }
+      if (typeof p.input === 'string') inputBox.value = p.input;
+      if (typeof p.text_only === 'boolean') textOnlyCb.checked = p.text_only;
+
+      rowsEl.innerHTML = '';
+      for (const r of (p.rows || [])) {
+        addRow(r.zh || '', r.tr || '');
+        const last = rowsEl.lastElementChild;
+        if (last && r.checked) last.querySelector('.zyfy-check').checked = true;
+      }
+      if ((p.rows || []).length) editorEl.classList.add('zyfy-show');
+      else editorEl.classList.remove('zyfy-show');
+      status('✓ 專案已載入，共 ' + (p.rows || []).length + ' 句，可以繼續編輯');
+    } finally {
+      suppressAutosave = false;
+      scheduleAutosave();
+    }
+  }
+
+  function openProjectObject(data) {
+    if (!data || data.app !== 'zyfy-project' || !Array.isArray(data.rows)) {
+      throw new Error('不是族語專案檔');
+    }
+    pendingProject = data;
+    if (data.ethnicity && [...ethSel.options].some(o => o.value === data.ethnicity)) {
+      ethSel.value = data.ethnicity;
+    }
+    status('開啟專案中（載入選項…）');
+    loadOptions();
+  }
+
+  let autosaveTimer = null;
+  function scheduleAutosave() {
+    if (suppressAutosave) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      try {
+        const snap = snapshotProject();
+        if (!snap.rows.length && !(snap.input || '').trim()) {
+          localStorage.removeItem(AUTO_KEY);
+          return;
+        }
+        localStorage.setItem(AUTO_KEY, JSON.stringify(snap));
+      } catch (e) {
+        console.warn('自動儲存失敗', e);
+      }
+    }, 400);
+  }
+
+  saveProjBtn.addEventListener('click', () => {
+    const snap = snapshotProject();
+    if (!snap.rows.length) {
+      status('編輯區還沒有內容，沒有東西可以存', true);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(snap, null, 1)], { type: 'application/json;charset=utf-8' });
+    downloadBlob(blob, '族語專案_' + ethSel.value + '_' + timeStamp() + '.json');
+    status('✓ 專案已下載，下次可用「開啟專案」繼續編輯');
+    scheduleAutosave();
+  });
+
+  openProjBtn.addEventListener('click', () => projFileInput.click());
+  projFileInput.addEventListener('change', async () => {
+    const file = projFileInput.files && projFileInput.files[0];
+    projFileInput.value = '';
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      openProjectObject(data);
+    } catch (err) {
+      status('無法讀取專案檔：' + err.message, true);
+    }
+  });
+
+  inputBox.addEventListener('input', scheduleAutosave);
+  textOnlyCb.addEventListener('change', scheduleAutosave);
+  langSel.addEventListener('change', scheduleAutosave);
+  spkSel.addEventListener('change', scheduleAutosave);
+
+  // 啟動：若有自動儲存內容就復原，否則載入預設選項
+  try {
+    const raw = localStorage.getItem(AUTO_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data.app === 'zyfy-project' && Array.isArray(data.rows) && data.rows.length) {
+        openProjectObject(data);
+      } else {
+        loadOptions();
+      }
+    } else {
+      loadOptions();
+    }
+  } catch (e) {
+    loadOptions();
+  }
+
+  // ---------- 匯出（全部／勾選） ----------
+  async function doExport(selectedOnly) {
+    const items = collectRows(selectedOnly);
+    if (!items.length) {
+      status(selectedOnly ? '沒有勾選任何句子' : '編輯區沒有可匯出的句子', true);
+      return;
+    }
+    const textOnly = textOnlyCb.checked;
+    setBusy(true);
+    try {
+      if (!textOnly) {
+        const sess = newSession();
+        await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);   // 解鎖配音員，一次即可
+        for (let i = 0; i < items.length; i++) {
+          status('合成中（' + (i + 1) + '/' + items.length + '）：' + items[i].tr);
+          const blob = await getAudio(spkSel.value, items[i].tr, sess);
+          downloadBlob(blob, sanitizeFilename(items[i].tr) + '.wav');
+          await new Promise(r => setTimeout(r, 400));  // 讓瀏覽器接受連續下載
+        }
+      }
+      // 一行中文、一行翻譯，依編輯區順序（含 BOM 讓 Windows 記事本正確開啟）
+      const txt = items.map(it => it.zh + '\n' + it.tr).join('\n') + '\n';
+      const name = '翻譯對照' + (selectedOnly ? '_勾選' : '') + '_' + ethSel.value + '_' + timeStamp() + '.txt';
+      downloadBlob(new Blob(['\ufeff' + txt], { type: 'text/plain;charset=utf-8' }), name);
+      status('匯出完成！共 ' + items.length + ' 句' + (textOnly ? '（僅文字檔）' : '（音檔＋文字檔）') + '。');
+    } catch (err) {
+      console.error(err);
+      status('匯出失敗：' + err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  exportAllBtn.addEventListener('click', () => doExport(false));
+  exportSelBtn.addEventListener('click', () => doExport(true));
+
+  // ---------- 全選／清除勾選／刪除勾選 ----------
+  selectAllBtn.addEventListener('click', () => {
+    const rows = rowsEl.querySelectorAll('.zyfy-row');
+    if (!rows.length) { status('編輯區還沒有句子', true); return; }
+    for (const row of rows) row.querySelector('.zyfy-check').checked = true;
+    status('已全選 ' + rows.length + ' 句');
+    scheduleAutosave();
+  });
+  clearSelBtn.addEventListener('click', () => {
+    const rows = rowsEl.querySelectorAll('.zyfy-row');
+    for (const row of rows) row.querySelector('.zyfy-check').checked = false;
+    status(rows.length ? '已清除勾選' : '編輯區還沒有句子');
+    scheduleAutosave();
+  });
+  deleteSelBtn.addEventListener('click', () => {
+    if (isBusy()) return;
+    const checked = [...rowsEl.querySelectorAll('.zyfy-row')].filter(r => r.querySelector('.zyfy-check').checked);
+    if (!checked.length) { status('請先勾選要刪除的句子', true); return; }
+    if (!confirm('確定刪除勾選的 ' + checked.length + ' 句嗎？')) return;
+    for (const row of checked) {
+      if (dictTargetRow === row) closeDict();
+      row.remove();
+    }
+    const left = rowsEl.querySelectorAll('.zyfy-row').length;
+    if (!left) editorEl.classList.remove('zyfy-show');
+    status('✓ 已刪除 ' + checked.length + ' 句，剩餘 ' + left + ' 句');
+    scheduleAutosave();
+  });
+
+  // ---------- Klokah 查字典（內嵌＋套用） ----------
+  function currentDialectId() {
+    const label = langSel.selectedOptions[0] ? langSel.selectedOptions[0].text : '';
+    if (KLOKAH_DIALECT[label] != null) return { id: KLOKAH_DIALECT[label], label };
+    // 容錯：部分標籤可能多了底線後綴，用包含比對
+    for (const [k, v] of Object.entries(KLOKAH_DIALECT)) {
+      if (label.includes(k) || k.includes(label)) return { id: v, label: k };
+    }
+    return { id: null, label };
+  }
+
+  function getInputSelection(el) {
+    if (!el || typeof el.selectionStart !== 'number') return '';
+    if (el.selectionStart === el.selectionEnd) return '';
+    return el.value.slice(el.selectionStart, el.selectionEnd).trim();
+  }
+
+  function closeDict() {
+    dictPanel.hidden = true;
+    if (dictTargetRow) dictTargetRow.classList.remove('zyfy-active');
+    dictTargetRow = null;
+  }
+
+  function openDictForRow(row) {
+    for (const r of rowsEl.querySelectorAll('.zyfy-row')) r.classList.remove('zyfy-active');
+    dictTargetRow = row;
+    row.classList.add('zyfy-active');
+    dictPanel.hidden = false;
+
+    const zhEl = row.querySelector('.zyfy-zh');
+    const trEl = row.querySelector('.zyfy-tr');
+    const selected = getInputSelection(trEl) || getInputSelection(zhEl);
+    const q = selected || trEl.value.trim() || zhEl.value.trim();
+    dictQ.value = q;
+    dictList.innerHTML = '';
+    if (q) runDictSearch();
+    else {
+      const d = currentDialectId();
+      dictMeta.textContent = d.id
+        ? ('語別：' + d.label + '（Klokah #' + d.id + '）。請輸入要查的字。')
+        : ('目前語別「' + d.label + '」找不到對應的 Klokah 方言編號。');
+      dictQ.focus();
+    }
+    dictPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function runDictSearch() {
+    const q = dictQ.value.trim().slice(0, 80);
+    if (!q) { dictMeta.textContent = '請輸入要查詢的字'; return; }
+    dictQ.value = q;
+    const d = currentDialectId();
+    if (!d.id) {
+      dictMeta.textContent = '目前語別「' + d.label + '」找不到對應的 Klokah 方言編號。';
+      return;
+    }
+    dictMeta.textContent = '查詢中：「' + q + '」／' + d.label + '…';
+    dictList.innerHTML = '';
+    dictGo.disabled = true;
+    try {
+      const url = 'https://web.klokah.tw/api/multiSearchResult.php?d=' + d.id +
+                  '&txt=' + encodeURIComponent(q);
+      const xmlText = await (await fetch(url)).text();
+      const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+      if (doc.querySelector('parsererror')) throw new Error('無法解析回傳資料');
+
+      const items = [];
+      const seen = new Set();
+      for (const section of doc.documentElement.children) {
+        const srcKey = section.tagName;
+        const srcLabel = KLOKAH_SRC_NAME[srcKey] || srcKey;
+        for (const item of section.querySelectorAll(':scope > item')) {
+          const native = (item.querySelector('text') || {}).textContent || '';
+          const chinese = (item.querySelector('chinese') || {}).textContent || '';
+          const link = (item.querySelector('url') || {}).textContent || '';
+          const key = native.trim() + '|' + chinese.trim();
+          if (!native.trim() || seen.has(key)) continue;
+          seen.add(key);
+          items.push({ native: native.trim(), chinese: chinese.trim(), src: srcLabel, url: link.trim() });
+        }
+      }
+
+      dictMeta.textContent = items.length
+        ? ('找到 ' + items.length + ' 筆（' + d.label + '／關鍵字「' + q + '」）。點「套用」可寫入該行翻譯。')
+        : ('沒有找到結果（' + d.label + '／「' + q + '」）。可改打單字或中文再試。');
+
+      for (const it of items.slice(0, 40)) {
+        const div = document.createElement('div');
+        div.className = 'zyfy-dict-item';
+        div.innerHTML =
+          '<div class="zyfy-di-main">' +
+            '<div class="zyfy-di-native"></div>' +
+            '<div class="zyfy-di-zh"></div>' +
+            '<div class="zyfy-di-src"></div>' +
+          '</div>' +
+          '<button type="button" class="zyfy-apply">套用</button>';
+        div.querySelector('.zyfy-di-native').textContent = it.native;
+        div.querySelector('.zyfy-di-zh').textContent = it.chinese || '（無中文對照）';
+        const srcEl = div.querySelector('.zyfy-di-src');
+        if (it.url) {
+          srcEl.appendChild(document.createTextNode(it.src + ' · '));
+          const a = document.createElement('a');
+          a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '在 E 樂園開啟';
+          srcEl.appendChild(a);
+        } else {
+          srcEl.textContent = it.src;
+        }
+        div.querySelector('.zyfy-apply').addEventListener('click', () => {
+          if (!dictTargetRow || !dictTargetRow.isConnected) {
+            status('目標句子已不存在，請重新點該行的查字典', true);
+            return;
+          }
+          const tr = dictTargetRow.querySelector('.zyfy-tr');
+          tr.value = it.native;
+          tr.dispatchEvent(new Event('input', { bubbles: true }));
+          status('✓ 已套用到該行：' + it.native);
+          scheduleAutosave();
+        });
+        dictList.appendChild(div);
+      }
+    } catch (err) {
+      console.error(err);
+      dictMeta.textContent = '查詢失敗：' + err.message;
+    } finally {
+      dictGo.disabled = false;
+    }
+  }
+
+  dictGo.addEventListener('click', runDictSearch);
+  dictQ.addEventListener('keydown', (e) => { if (e.key === 'Enter') runDictSearch(); });
+  dictClose.addEventListener('click', closeDict);
+
+  // ---------- 串接成一個語音檔 ----------
+  exportMergeBtn.addEventListener('click', async () => {
+    const items = collectRows(false);
+    if (!items.length) { status('編輯區沒有可合成的句子', true); return; }
+    setBusy(true);
+    try {
+      const sess = newSession();
+      await gradioCall(TTS_APP, 'lambda', [ethSel.value], sess);
+      const blobs = [];
+      for (let i = 0; i < items.length; i++) {
+        status('合成中（' + (i + 1) + '/' + items.length + '）：' + items[i].tr);
+        blobs.push(await getAudio(spkSel.value, items[i].tr, sess));
+      }
+      status('串接中…');
+      const merged = await mergeWavBlobs(blobs, 0.4);
+      const name = '串接語音_' + sanitizeFilename(items[0].tr).slice(0, 20) + '_共' + items.length + '句.wav';
+      downloadBlob(merged, name);
+      status('串接完成！已下載 ' + name);
+    } catch (err) {
+      console.error(err);
+      status('串接失敗：' + err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  }  // zyfyInit 結束
+})();
+</script>
+
+
+</body>
+</html>
