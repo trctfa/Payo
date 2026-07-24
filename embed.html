@@ -50,7 +50,7 @@
   <input type="file" id="zyfy-proj-file" accept=".json,application/json" style="display:none">
 
   <div class="zyfy-editor" id="zyfy-editor">
-    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻、▶ 唸、⭳ 下載、✕ 刪除；勾選後可「匯出勾選」或「刪除勾選」。</div>
+    <div class="zyfy-editor-hint">上排中文、下排翻譯都可以直接修改。圖示：↻ 重翻、▶ 唸、⭳ 下載、📖 查字典、✕ 刪除；勾選後可「匯出勾選」或「刪除勾選」。</div>
     <div id="zyfy-rows"></div>
 
     <div class="zyfy-sel-bar">
@@ -88,9 +88,34 @@
     </div>
   </div>
 
+  <!-- Klokah 查字典面板 -->
+  <div class="zyfy-dict" id="zyfy-dict" hidden>
+    <div class="zyfy-dict-head">
+      <strong>族語 E 樂園 · 查字典</strong>
+      <button type="button" class="zyfy-icon" id="zyfy-dict-close" title="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="zyfy-dict-search">
+      <input type="text" id="zyfy-dict-q" placeholder="輸入中文或族語單字／句子">
+      <button type="button" class="zyfy-run zyfy-alt" id="zyfy-dict-go" style="width:auto;padding:10px 16px;flex:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>查詢</span>
+      </button>
+    </div>
+    <div class="zyfy-dict-meta" id="zyfy-dict-meta"></div>
+    <div class="zyfy-dict-list" id="zyfy-dict-list"></div>
+    <div class="zyfy-dict-foot">資料來源：
+      <a href="https://web.klokah.tw/" target="_blank" rel="noopener">族語 E 樂園</a>
+      （<a href="https://web.klokah.tw/api/" target="_blank" rel="noopener">公開 API</a>）
+    </div>
+  </div>
+
   <div class="zyfy-credit">
     翻譯與語音合成服務由
-    <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a> 提供
+    <a href="https://ai-labs.ilrdf.org.tw/" target="_blank" rel="noopener">原住民族語言研究發展基金會 AI 實驗室</a> 提供；
+    字典查詢串接
+    <a href="https://web.klokah.tw/" target="_blank" rel="noopener">族語 E 樂園</a>
   </div>
 </div>
 
@@ -225,6 +250,49 @@
 #zyfy-tool .zyfy-export-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
 #zyfy-tool .zyfy-credit { margin-top: 16px; font-size: 12px; color: var(--zyfy-muted); text-align: center; }
 #zyfy-tool .zyfy-credit a { color: var(--zyfy-accent); text-decoration: none; }
+
+/* ---------- 查字典面板 ---------- */
+#zyfy-tool .zyfy-dict {
+  margin-top: 14px;
+  background: var(--zyfy-card-2);
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 12px;
+  padding: 14px;
+}
+#zyfy-tool .zyfy-dict[hidden] { display: none !important; }
+#zyfy-tool .zyfy-dict-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; color: var(--zyfy-text);
+}
+#zyfy-tool .zyfy-dict-search { display: flex; gap: 8px; margin-bottom: 8px; }
+#zyfy-tool .zyfy-dict-search input { flex: 1; }
+#zyfy-tool .zyfy-dict-meta { font-size: 13px; color: var(--zyfy-muted); margin-bottom: 8px; min-height: 18px; }
+#zyfy-tool .zyfy-dict-list { max-height: 280px; overflow-y: auto; }
+#zyfy-tool .zyfy-dict-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.15);
+}
+#zyfy-tool .zyfy-dict-item:last-child { border-bottom: 0; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-main { flex: 1; min-width: 0; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-native { color: var(--zyfy-ok); font-weight: 700; word-break: break-word; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-zh { color: var(--zyfy-text); font-size: 14px; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-src { color: var(--zyfy-muted); font-size: 12px; margin-top: 2px; }
+#zyfy-tool .zyfy-dict-item .zyfy-di-src a { color: var(--zyfy-accent); text-decoration: none; }
+#zyfy-tool .zyfy-dict-item .zyfy-apply {
+  flex: none; border: 0; border-radius: 8px; padding: 7px 12px;
+  background: var(--zyfy-ok); color: #06281c; font-weight: 700;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+}
+#zyfy-tool .zyfy-dict-item .zyfy-apply:hover { filter: brightness(1.1); }
+#zyfy-tool .zyfy-dict-foot { margin-top: 10px; font-size: 12px; color: var(--zyfy-muted); }
+#zyfy-tool .zyfy-dict-foot a { color: var(--zyfy-accent); text-decoration: none; }
+#zyfy-tool .zyfy-row.zyfy-active {
+  background: rgba(56,189,248,.08);
+  border-radius: 8px;
+  margin: 0 -6px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
 </style>
 
 <script>
@@ -261,7 +329,30 @@
   const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>';
   const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>';
+  const ICON_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
   const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+
+  // 你的語別標籤 → Klokah 方言編號（官方 API https://web.klokah.tw/api/）
+  const KLOKAH_DIALECT = {
+    '阿美_南勢': 1, '阿美_秀姑巒': 2, '阿美_海岸': 3, '阿美_馬蘭': 4, '阿美_恆春': 5,
+    '泰雅_賽考利克': 6, '泰雅_澤敖利': 7, '泰雅_汶水': 8, '泰雅_萬大': 9,
+    '泰雅_四季': 10, '泰雅_宜蘭澤敖利': 11,
+    '賽夏': 13, '邵': 14,
+    '賽德克_都達': 15, '賽德克_德固達雅': 16, '賽德克_德鹿谷': 17,
+    '布農_卓群': 18, '布農_卡群': 19, '布農_丹群': 20, '布農_巒群': 21, '布農_郡群': 22,
+    '排灣_東': 23, '排灣_北': 24, '排灣_中': 25, '排灣_南': 26,
+    '魯凱_東': 27, '魯凱_霧台': 28, '魯凱_大武': 29, '魯凱_多納': 30, '魯凱_茂林': 31, '魯凱_萬山': 32,
+    '太魯閣': 33, '噶瑪蘭': 34, '鄒': 35,
+    '卡那卡那富': 36, '拉阿魯哇': 37,
+    '卑南_南王': 38, '卑南_知本': 39, '卑南_西群': 40, '卑南_建和': 41,
+    '雅美': 42, '撒奇萊雅': 43
+  };
+  const KLOKAH_SRC_NAME = {
+    alphabet: '字母篇', conversation: '生活會話', speech: '句型篇', nine: '九階教材',
+    twelve: '十二年國教教材', vocabulary: '千詞表', custom: '自訂辭典',
+    song: '歌謠篇', picture: '圖畫故事', read: '閱讀書寫', culture: '文化篇',
+    dialogue: '情境族語', essay: '族語短文', readingtext: '閱讀文本'
+  };
 
   const $ = (id) => document.getElementById('zyfy-' + id);
   const toolEl = document.getElementById('zyfy-tool');
@@ -272,12 +363,15 @@
   const exportAllBtn = $('export-all'), exportSelBtn = $('export-sel'), exportMergeBtn = $('export-merge');
   const saveProjBtn = $('save-proj'), openProjBtn = $('open-proj'), projFileInput = $('proj-file');
   const selectAllBtn = $('select-all'), clearSelBtn = $('clear-sel'), deleteSelBtn = $('delete-sel');
+  const dictPanel = $('dict'), dictQ = $('dict-q'), dictGo = $('dict-go');
+  const dictMeta = $('dict-meta'), dictList = $('dict-list'), dictClose = $('dict-close');
 
   const audioCache = new Map();   // 「配音員\u0000文字」-> wav Blob（唸過就不重新合成）
   const AUTO_KEY = 'zyfy_autosave_v1';
   let sharedPlayer = null;
   let pendingProject = null;   // 開啟專案時暫存，等選項載入完再套用
   let suppressAutosave = false;
+  let dictTargetRow = null;    // 目前查字典對應的編輯列
 
   function status(text, isErr) {
     statusEl.textContent = text;
@@ -474,6 +568,7 @@
         '<button type="button" class="zyfy-icon zyfy-re" title="重新翻譯這一句">' + ICON_RETRY + '</button>' +
         '<button type="button" class="zyfy-icon zyfy-play" title="唸這一句">' + ICON_PLAY + '</button>' +
         '<button type="button" class="zyfy-icon zyfy-dl1" title="下載這一句的音檔">' + ICON_DL + '</button>' +
+        '<button type="button" class="zyfy-icon zyfy-dict-btn" title="查字典（族語E樂園）">' + ICON_BOOK + '</button>' +
         '<button type="button" class="zyfy-icon zyfy-del" title="刪除這一句">' + ICON_DEL + '</button>' +
       '</div>' +
       '<div class="zyfy-row-main">' +
@@ -552,9 +647,16 @@
     row.querySelector('.zyfy-del').addEventListener('click', () => {
       if (isBusy()) return;
       row.remove();
+      if (dictTargetRow === row) closeDict();
       if (!rowsEl.querySelector('.zyfy-row')) editorEl.classList.remove('zyfy-show');
       status('已刪除 1 句，剩餘 ' + rowsEl.querySelectorAll('.zyfy-row').length + ' 句');
       scheduleAutosave();
+    });
+
+    // 📖 查字典
+    row.querySelector('.zyfy-dict-btn').addEventListener('click', () => {
+      if (isBusy()) return;
+      openDictForRow(row);
     });
 
     rowsEl.appendChild(row);
@@ -787,12 +889,146 @@
     const checked = [...rowsEl.querySelectorAll('.zyfy-row')].filter(r => r.querySelector('.zyfy-check').checked);
     if (!checked.length) { status('請先勾選要刪除的句子', true); return; }
     if (!confirm('確定刪除勾選的 ' + checked.length + ' 句嗎？')) return;
-    for (const row of checked) row.remove();
+    for (const row of checked) {
+      if (dictTargetRow === row) closeDict();
+      row.remove();
+    }
     const left = rowsEl.querySelectorAll('.zyfy-row').length;
     if (!left) editorEl.classList.remove('zyfy-show');
     status('✓ 已刪除 ' + checked.length + ' 句，剩餘 ' + left + ' 句');
     scheduleAutosave();
   });
+
+  // ---------- Klokah 查字典（內嵌＋套用） ----------
+  function currentDialectId() {
+    const label = langSel.selectedOptions[0] ? langSel.selectedOptions[0].text : '';
+    if (KLOKAH_DIALECT[label] != null) return { id: KLOKAH_DIALECT[label], label };
+    // 容錯：部分標籤可能多了底線後綴，用包含比對
+    for (const [k, v] of Object.entries(KLOKAH_DIALECT)) {
+      if (label.includes(k) || k.includes(label)) return { id: v, label: k };
+    }
+    return { id: null, label };
+  }
+
+  function getInputSelection(el) {
+    if (!el || typeof el.selectionStart !== 'number') return '';
+    if (el.selectionStart === el.selectionEnd) return '';
+    return el.value.slice(el.selectionStart, el.selectionEnd).trim();
+  }
+
+  function closeDict() {
+    dictPanel.hidden = true;
+    if (dictTargetRow) dictTargetRow.classList.remove('zyfy-active');
+    dictTargetRow = null;
+  }
+
+  function openDictForRow(row) {
+    for (const r of rowsEl.querySelectorAll('.zyfy-row')) r.classList.remove('zyfy-active');
+    dictTargetRow = row;
+    row.classList.add('zyfy-active');
+    dictPanel.hidden = false;
+
+    const zhEl = row.querySelector('.zyfy-zh');
+    const trEl = row.querySelector('.zyfy-tr');
+    const selected = getInputSelection(trEl) || getInputSelection(zhEl);
+    const q = selected || trEl.value.trim() || zhEl.value.trim();
+    dictQ.value = q;
+    dictList.innerHTML = '';
+    if (q) runDictSearch();
+    else {
+      const d = currentDialectId();
+      dictMeta.textContent = d.id
+        ? ('語別：' + d.label + '（Klokah #' + d.id + '）。請輸入要查的字。')
+        : ('目前語別「' + d.label + '」找不到對應的 Klokah 方言編號。');
+      dictQ.focus();
+    }
+    dictPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function runDictSearch() {
+    const q = dictQ.value.trim().slice(0, 80);
+    if (!q) { dictMeta.textContent = '請輸入要查詢的字'; return; }
+    dictQ.value = q;
+    const d = currentDialectId();
+    if (!d.id) {
+      dictMeta.textContent = '目前語別「' + d.label + '」找不到對應的 Klokah 方言編號。';
+      return;
+    }
+    dictMeta.textContent = '查詢中：「' + q + '」／' + d.label + '…';
+    dictList.innerHTML = '';
+    dictGo.disabled = true;
+    try {
+      const url = 'https://web.klokah.tw/api/multiSearchResult.php?d=' + d.id +
+                  '&txt=' + encodeURIComponent(q);
+      const xmlText = await (await fetch(url)).text();
+      const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+      if (doc.querySelector('parsererror')) throw new Error('無法解析回傳資料');
+
+      const items = [];
+      const seen = new Set();
+      for (const section of doc.documentElement.children) {
+        const srcKey = section.tagName;
+        const srcLabel = KLOKAH_SRC_NAME[srcKey] || srcKey;
+        for (const item of section.querySelectorAll(':scope > item')) {
+          const native = (item.querySelector('text') || {}).textContent || '';
+          const chinese = (item.querySelector('chinese') || {}).textContent || '';
+          const link = (item.querySelector('url') || {}).textContent || '';
+          const key = native.trim() + '|' + chinese.trim();
+          if (!native.trim() || seen.has(key)) continue;
+          seen.add(key);
+          items.push({ native: native.trim(), chinese: chinese.trim(), src: srcLabel, url: link.trim() });
+        }
+      }
+
+      dictMeta.textContent = items.length
+        ? ('找到 ' + items.length + ' 筆（' + d.label + '／關鍵字「' + q + '」）。點「套用」可寫入該行翻譯。')
+        : ('沒有找到結果（' + d.label + '／「' + q + '」）。可改打單字或中文再試。');
+
+      for (const it of items.slice(0, 40)) {
+        const div = document.createElement('div');
+        div.className = 'zyfy-dict-item';
+        div.innerHTML =
+          '<div class="zyfy-di-main">' +
+            '<div class="zyfy-di-native"></div>' +
+            '<div class="zyfy-di-zh"></div>' +
+            '<div class="zyfy-di-src"></div>' +
+          '</div>' +
+          '<button type="button" class="zyfy-apply">套用</button>';
+        div.querySelector('.zyfy-di-native').textContent = it.native;
+        div.querySelector('.zyfy-di-zh').textContent = it.chinese || '（無中文對照）';
+        const srcEl = div.querySelector('.zyfy-di-src');
+        if (it.url) {
+          srcEl.appendChild(document.createTextNode(it.src + ' · '));
+          const a = document.createElement('a');
+          a.href = it.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '在 E 樂園開啟';
+          srcEl.appendChild(a);
+        } else {
+          srcEl.textContent = it.src;
+        }
+        div.querySelector('.zyfy-apply').addEventListener('click', () => {
+          if (!dictTargetRow || !dictTargetRow.isConnected) {
+            status('目標句子已不存在，請重新點該行的查字典', true);
+            return;
+          }
+          const tr = dictTargetRow.querySelector('.zyfy-tr');
+          tr.value = it.native;
+          tr.dispatchEvent(new Event('input', { bubbles: true }));
+          status('✓ 已套用到該行：' + it.native);
+          scheduleAutosave();
+        });
+        dictList.appendChild(div);
+      }
+    } catch (err) {
+      console.error(err);
+      dictMeta.textContent = '查詢失敗：' + err.message;
+    } finally {
+      dictGo.disabled = false;
+    }
+  }
+
+  dictGo.addEventListener('click', runDictSearch);
+  dictQ.addEventListener('keydown', (e) => { if (e.key === 'Enter') runDictSearch(); });
+  dictClose.addEventListener('click', closeDict);
 
   // ---------- 串接成一個語音檔 ----------
   exportMergeBtn.addEventListener('click', async () => {

@@ -24,9 +24,11 @@ import sys
 import tempfile
 import threading
 import tkinter as tk
+import urllib.parse
 import urllib.request
 import uuid
 import wave
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
@@ -41,6 +43,29 @@ ETHNICITIES = ['阿美', '泰雅', '排灣', '布農', '卑南', '魯凱', '鄒'
 DEFAULT_ETHNICITY = "阿美"
 DEFAULT_LANG_LABEL = "阿美_南勢"
 DEFAULT_SPEAKER = "阿美_南勢_女聲"
+
+# 語別標籤 → Klokah 方言編號（https://web.klokah.tw/api/）
+KLOKAH_DIALECT = {
+    "阿美_南勢": 1, "阿美_秀姑巒": 2, "阿美_海岸": 3, "阿美_馬蘭": 4, "阿美_恆春": 5,
+    "泰雅_賽考利克": 6, "泰雅_澤敖利": 7, "泰雅_汶水": 8, "泰雅_萬大": 9,
+    "泰雅_四季": 10, "泰雅_宜蘭澤敖利": 11,
+    "賽夏": 13, "邵": 14,
+    "賽德克_都達": 15, "賽德克_德固達雅": 16, "賽德克_德鹿谷": 17,
+    "布農_卓群": 18, "布農_卡群": 19, "布農_丹群": 20, "布農_巒群": 21, "布農_郡群": 22,
+    "排灣_東": 23, "排灣_北": 24, "排灣_中": 25, "排灣_南": 26,
+    "魯凱_東": 27, "魯凱_霧台": 28, "魯凱_大武": 29, "魯凱_多納": 30,
+    "魯凱_茂林": 31, "魯凱_萬山": 32,
+    "太魯閣": 33, "噶瑪蘭": 34, "鄒": 35,
+    "卡那卡那富": 36, "拉阿魯哇": 37,
+    "卑南_南王": 38, "卑南_知本": 39, "卑南_西群": 40, "卑南_建和": 41,
+    "雅美": 42, "撒奇萊雅": 43,
+}
+KLOKAH_SRC_NAME = {
+    "alphabet": "字母篇", "conversation": "生活會話", "speech": "句型篇", "nine": "九階教材",
+    "twelve": "十二年國教教材", "vocabulary": "千詞表", "custom": "自訂辭典",
+    "song": "歌謠篇", "picture": "圖畫故事", "read": "閱讀書寫", "culture": "文化篇",
+    "dialogue": "情境族語", "essay": "族語短文", "readingtext": "閱讀文本",
+}
 
 CTX = ssl.create_default_context()
 # 該網站憑證鏈在部分環境驗證不過；如你的環境正常，可拿掉下面兩行
@@ -133,6 +158,35 @@ def play_wav_file(path):
         pass
     return False
 
+def klokah_dialect_id(lang_label):
+    if lang_label in KLOKAH_DIALECT:
+        return KLOKAH_DIALECT[lang_label], lang_label
+    for k, v in KLOKAH_DIALECT.items():
+        if k in lang_label or lang_label in k:
+            return v, k
+    return None, lang_label
+
+def klokah_search(dialect_id, query):
+    """呼叫族語 E 樂園 API，回傳 [{native, chinese, src, url}, ...]。"""
+    url = ("https://web.klokah.tw/api/multiSearchResult.php?d="
+           + str(dialect_id) + "&txt=" + urllib.parse.quote(query))
+    with urllib.request.urlopen(url, context=CTX, timeout=30) as r:
+        xml_text = r.read().decode("utf-8", errors="replace")
+    root = ET.fromstring(xml_text)
+    items, seen = [], set()
+    for section in list(root):
+        src = KLOKAH_SRC_NAME.get(section.tag, section.tag)
+        for item in section.findall("item"):
+            native = (item.findtext("text") or "").strip()
+            chinese = (item.findtext("chinese") or "").strip()
+            link = (item.findtext("url") or "").strip()
+            key = native + "|" + chinese
+            if not native or key in seen:
+                continue
+            seen.add(key)
+            items.append({"native": native, "chinese": chinese, "src": src, "url": link})
+    return items
+
 # ---------------- GUI ----------------
 class App:
     def __init__(self, root):
@@ -178,7 +232,7 @@ class App:
 
         # --- 步驟二：編輯區 ---
         editor_box = ttk.LabelFrame(
-            frm, text="步驟二：編輯區（上排中文、下排翻譯都可以直接修改；改完中文按「重新」單獨重翻那一句）")
+            frm, text="步驟二：編輯區（可改字；「重新」重翻、「▶唸」試聽、「字典」查 Klokah 並套用）")
         editor_box.pack(fill="both", expand=True, **pad)
 
         self.canvas = tk.Canvas(editor_box, highlightthickness=0)
@@ -263,6 +317,7 @@ class App:
         for r in self.rows:
             r["btn"].configure(state=state)
             r["play"].configure(state=state)
+            r["dict"].configure(state=state)
 
     def poll_queue(self):
         try:
@@ -367,6 +422,9 @@ class App:
             play = ttk.Button(left, text="▶ 唸", width=5,
                               command=lambda i=idx: self.play_row(i))
             play.pack(pady=(2, 0))
+            dict_btn = ttk.Button(left, text="字典", width=5,
+                                  command=lambda i=idx: self.open_dict(i))
+            dict_btn.pack(pady=(2, 0))
 
             zh_e = tk.Entry(f, font=("", 12))
             zh_e.insert(0, zh)
@@ -378,7 +436,7 @@ class App:
 
             ttk.Separator(self.rows_frame).pack(fill="x", pady=2)
             self.rows.append({"var": var, "zh": zh_e, "tr": tr_e,
-                              "btn": btn, "play": play, "frame": f})
+                              "btn": btn, "play": play, "dict": dict_btn, "frame": f})
         self.canvas.yview_moveto(0)
 
     # ---------- 步驟一：翻譯全部 ----------
@@ -470,6 +528,110 @@ class App:
             finally:
                 self.msg_q.put(("play_reset", idx))
         threading.Thread(target=worker, daemon=True).start()
+
+    # ---------- 查字典（Klokah 內嵌＋套用） ----------
+    def open_dict(self, idx):
+        if idx < 0 or idx >= len(self.rows):
+            return
+        row = self.rows[idx]
+        lang_label = self.lang_cb.get()
+        dialect_id, mapped = klokah_dialect_id(lang_label)
+        if dialect_id is None:
+            messagebox.showwarning("提示", f"語別「{lang_label}」找不到對應的 Klokah 方言編號")
+            return
+
+        # 反白文字優先，否則用整句翻譯／中文
+        q = ""
+        try:
+            if row["tr"].selection_present():
+                q = row["tr"].selection_get().strip()
+            elif row["zh"].selection_present():
+                q = row["zh"].selection_get().strip()
+        except tk.TclError:
+            q = ""
+        if not q:
+            q = row["tr"].get().strip() or row["zh"].get().strip()
+
+        win = tk.Toplevel(self.root)
+        win.title(f"查字典 · {mapped}")
+        win.geometry("560x480")
+        win.transient(self.root)
+
+        ttk.Label(win, text=f"語別：{mapped}（Klokah #{dialect_id}）　目標：第 {idx + 1} 行").pack(
+            anchor="w", padx=10, pady=(10, 4))
+        bar = ttk.Frame(win); bar.pack(fill="x", padx=10, pady=4)
+        q_var = tk.StringVar(value=q)
+        ttk.Entry(bar, textvariable=q_var, font=("", 12)).pack(side="left", fill="x", expand=True)
+        go_btn = ttk.Button(bar, text="查詢"); go_btn.pack(side="left", padx=(6, 0))
+
+        meta = ttk.Label(win, text="輸入關鍵字後按查詢（中文或族語皆可）")
+        meta.pack(anchor="w", padx=10, pady=4)
+
+        list_frame = ttk.Frame(win); list_frame.pack(fill="both", expand=True, padx=10, pady=4)
+        lb = tk.Listbox(list_frame, font=("", 11), activestyle="dotbox")
+        sb = ttk.Scrollbar(list_frame, orient="vertical", command=lb.yview)
+        lb.configure(yscrollcommand=sb.set)
+        lb.pack(side="left", fill="both", expand=True)
+        sb.pack(side="right", fill="y")
+
+        results = []
+
+        def render(items):
+            results.clear()
+            results.extend(items)
+            lb.delete(0, "end")
+            for it in items:
+                line = it["native"]
+                if it["chinese"]:
+                    line += "　｜　" + it["chinese"]
+                line += "　〔" + it["src"] + "〕"
+                lb.insert("end", line)
+            meta.configure(text=f"找到 {len(items)} 筆" if items else "沒有找到結果，可改打單字或中文再試")
+
+        def do_search():
+            query = q_var.get().strip()
+            if not query:
+                meta.configure(text="請輸入要查詢的字")
+                return
+            go_btn.configure(state="disabled")
+            meta.configure(text=f"查詢中：「{query}」…")
+
+            def worker():
+                try:
+                    items = klokah_search(dialect_id, query)[:40]
+                    self.msg_q.put(("log", f"字典查詢「{query}」→ {len(items)} 筆"))
+                    win.after(0, lambda: (render(items), go_btn.configure(state="normal")))
+                except Exception as e:
+                    win.after(0, lambda: (
+                        meta.configure(text=f"查詢失敗：{e}"),
+                        go_btn.configure(state="normal")))
+            threading.Thread(target=worker, daemon=True).start()
+
+        def apply_selected():
+            sel = lb.curselection()
+            if not sel:
+                messagebox.showwarning("提示", "請先點選一筆結果", parent=win)
+                return
+            if idx >= len(self.rows):
+                messagebox.showwarning("提示", "目標句子已不存在", parent=win)
+                return
+            native = results[sel[0]]["native"]
+            e = self.rows[idx]["tr"]
+            e.delete(0, "end")
+            e.insert(0, native)
+            self.log(f"✓ 字典套用第 {idx + 1} 行：{native}")
+            win.destroy()
+
+        go_btn.configure(command=do_search)
+        win.bind("<Return>", lambda e: do_search())
+        btn_row = ttk.Frame(win); btn_row.pack(fill="x", padx=10, pady=10)
+        ttk.Button(btn_row, text="套用到該行翻譯", command=apply_selected).pack(side="left", fill="x", expand=True, padx=(0, 4))
+        ttk.Button(btn_row, text="關閉", command=win.destroy).pack(side="left", fill="x", expand=True, padx=(4, 0))
+        ttk.Label(win, text="資料來源：族語 E 樂園公開 API（web.klokah.tw）",
+                  foreground="#666").pack(anchor="w", padx=10, pady=(0, 8))
+
+        if q:
+            do_search()
 
     # ---------- 單行重翻 ----------
     def retranslate(self, idx):
