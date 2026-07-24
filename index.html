@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>阿美語族語教室 — 廣播教學產生器</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --clay:    #C1440E;
+      --earth:   #8B4513;
+      --gold:    #D4A017;
+      --green:   #2D6A4F;
+      --navy:    #1A3C5E;
+      --cream:   #FAF6EE;
+      --light:   #FDF9F4;
+      --dark:    #1C1208;
+      --gray:    #6B6460;
+      --border:  #E8DFCE;
+      --shadow:  0 4px 24px rgba(0,0,0,.10);
+      --radius:  14px;
+      --font:    'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--light);
+      color: var(--dark);
+      line-height: 1.7;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Pattern Background ── */
+    .pattern-bg {
+      background-color: var(--navy);
+      background-image:
+        repeating-linear-gradient(45deg,  transparent, transparent 10px, rgba(255,255,255,.03) 10px, rgba(255,255,255,.03) 20px),
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,.03) 10px, rgba(255,255,255,.03) 20px);
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(26,60,94,.96);
+      backdrop-filter: blur(10px);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo { color: #fff; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+    .nav-logo span { font-size: 1.4rem; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { color: rgba(255,255,255,.8); font-size: .9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 92vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 5rem 2rem;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, var(--navy) 0%, #0d2137 60%, #1a1a0a 100%);
+    }
+    .hero-decor {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(193,68,14,.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(45,106,79,.15) 0%, transparent 50%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 720px; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(212,160,23,.15);
+      border: 1px solid rgba(212,160,23,.4);
+      color: var(--gold);
+      padding: .3rem 1rem; border-radius: 99px;
+      font-size: .85rem; letter-spacing: .05em;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      color: #fff; font-weight: 800; line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .hero h1 em { color: var(--gold); font-style: normal; }
+    .hero p {
+      color: rgba(255,255,255,.75);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      margin-bottom: 2.5rem; max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: .8rem 2rem; border-radius: 99px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      border: none; transition: all .25s; display: inline-flex; align-items: center; gap: .5rem;
+    }
+    .btn-primary { background: var(--clay); color: #fff; box-shadow: 0 4px 16px rgba(193,68,14,.4); }
+    .btn-primary:hover { background: #a83508; transform: translateY(-2px); }
+    .btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.4); }
+    .btn-outline:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+    .hero-stats {
+      position: relative; z-index: 1;
+      margin-top: 4rem;
+      display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap;
+    }
+    .stat { color: rgba(255,255,255,.9); text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--gold); display: block; }
+    .stat-label { font-size: .85rem; color: rgba(255,255,255,.6); }
+
+    /* ── Section Base ── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .section-label {
+      display: inline-block; color: var(--clay); font-size: .85rem;
+      font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; margin-bottom: .75rem; }
+    .section-sub { color: var(--gray); font-size: 1.05rem; max-width: 540px; }
+
+    /* ── Features ── */
+    #features { background: var(--cream); }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .feature-card {
+      background: #fff; border-radius: var(--radius);
+      padding: 2rem; border: 1px solid var(--border);
+      box-shadow: var(--shadow); transition: transform .25s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+    .feature-card p { color: var(--gray); font-size: .95rem; }
+
+    /* ── Generator ── */
+    #generator { background: var(--light); }
+    .generator-box {
+      background: #fff; border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      overflow: hidden; margin-top: 2.5rem;
+    }
+    .gen-header {
+      background: linear-gradient(135deg, var(--navy), #0d2137);
+      padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .gen-header h3 { color: #fff; font-size: 1.1rem; font-weight: 700; }
+    .gen-header p { color: rgba(255,255,255,.6); font-size: .85rem; }
+    .gen-body { padding: 2rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+    @media(max-width:600px){ .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: .9rem; font-weight: 600; color: var(--dark); }
+    label span { color: var(--gray); font-weight: 400; font-size: .82rem; }
+    input, select, textarea {
+      padding: .7rem 1rem; border-radius: 8px;
+      border: 1.5px solid var(--border); font-size: .95rem;
+      font-family: var(--font); background: var(--light);
+      transition: border-color .2s; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--navy); }
+    textarea { resize: vertical; min-height: 90px; }
+    .api-group {
+      margin-bottom: 1.2rem; padding: 1rem 1.2rem;
+      background: #FFF8E6; border: 1px solid #F0D080;
+      border-radius: 10px; display: flex; align-items: center; gap: 1rem;
+    }
+    .api-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .api-group label { margin-bottom: .3rem; }
+    .api-group input { background: #fff; }
+    .api-group .api-hint { font-size: .8rem; color: #8B6914; margin-top: .3rem; }
+    .api-group .api-hint a { color: var(--earth); text-decoration: underline; }
+    .source-group {
+      margin-bottom: 1.2rem; padding: 1rem 1.2rem;
+      background: #F0F7F4; border: 1px solid #B7D4C6;
+      border-radius: 10px;
+    }
+    .source-group .source-title {
+      font-size: .9rem; font-weight: 700; margin-bottom: .7rem; color: var(--green);
+    }
+    .source-options {
+      display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; margin-bottom: .9rem;
+    }
+    .source-options label {
+      display: flex; align-items: center; gap: .4rem;
+      font-weight: 500; cursor: pointer;
+    }
+    .source-options input { width: auto; padding: 0; }
+    .mode-tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .mode-tab {
+      padding: .45rem 1.1rem; border-radius: 99px; border: 1.5px solid var(--border);
+      font-size: .88rem; font-weight: 600; cursor: pointer; transition: all .2s;
+      background: transparent; color: var(--gray);
+    }
+    .mode-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+    .manual-fields { display: none; }
+    .manual-fields.show { display: block; }
+    .gen-footer { padding: 0 2rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .btn-generate {
+      background: var(--clay); color: #fff; padding: .85rem 2.2rem;
+      border-radius: 99px; font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer; transition: all .25s;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .btn-generate:hover { background: #a83508; transform: translateY(-2px); }
+    .btn-generate:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .gen-note { font-size: .85rem; color: var(--gray); }
+
+    /* ── Output ── */
+    #output-section { display: none; background: var(--cream); padding: 3rem 2rem; }
+    .output-box {
+      background: #fff; border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .output-header {
+      background: linear-gradient(135deg, var(--green), #1a4030);
+      padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+    }
+    .output-header h3 { color: #fff; font-weight: 700; }
+    .output-actions { display: flex; gap: .5rem; }
+    .btn-sm {
+      padding: .4rem .9rem; border-radius: 99px; font-size: .82rem;
+      font-weight: 600; border: 1px solid rgba(255,255,255,.4);
+      background: transparent; color: #fff; cursor: pointer; transition: all .2s;
+    }
+    .btn-sm:hover { background: rgba(255,255,255,.15); }
+    .output-content {
+      display: block;
+      width: 100%;
+      min-height: 600px;
+      padding: 2rem;
+      white-space: pre-wrap;
+      font-size: .92rem;
+      line-height: 1.9;
+      font-family: 'Courier New', 'Noto Sans Mono', monospace;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border: none;
+      outline: none;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .loading-msg {
+      padding: 3rem; text-align: center; color: var(--gray);
+      font-size: 1rem;
+    }
+    .loading-msg .spinner {
+      width: 40px; height: 40px; border: 3px solid var(--border);
+      border-top-color: var(--clay); border-radius: 50%;
+      animation: spin 1s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Episodes ── */
+    #episodes { background: #fff; }
+    .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; margin-top: 2.5rem; }
+    .ep-card {
+      border-radius: var(--radius); border: 1px solid var(--border);
+      padding: 1.5rem; transition: all .25s; cursor: pointer;
+      background: var(--light);
+    }
+    .ep-card:hover { border-color: var(--clay); box-shadow: var(--shadow); transform: translateY(-3px); }
+    .ep-num { font-size: .8rem; color: var(--clay); font-weight: 700; margin-bottom: .4rem; }
+    .ep-title { font-size: 1.05rem; font-weight: 700; margin-bottom: .5rem; }
+    .ep-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .ep-tag {
+      background: var(--cream); border: 1px solid var(--border);
+      padding: .2rem .6rem; border-radius: 99px; font-size: .78rem; color: var(--gray);
+    }
+
+    /* ── How It Works ── */
+    #how { background: var(--cream); }
+    .steps { display: flex; gap: 2rem; margin-top: 3rem; flex-wrap: wrap; }
+    .step { flex: 1; min-width: 200px; text-align: center; }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--clay); color: #fff;
+      font-size: 1.3rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .step h4 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .step p { font-size: .9rem; color: var(--gray); }
+    .step-arrow { align-self: center; font-size: 1.5rem; color: var(--border); flex-shrink: 0; }
+
+    /* ── CTA Banner ── */
+    .cta-banner {
+      background: linear-gradient(135deg, var(--clay), var(--earth));
+      padding: 4rem 2rem; text-align: center; color: #fff;
+    }
+    .cta-banner h2 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; }
+    .cta-banner p { opacity: .85; margin-bottom: 2rem; font-size: 1.05rem; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--dark); color: rgba(255,255,255,.5);
+      padding: 2rem; text-align: center; font-size: .88rem;
+    }
+    footer strong { color: rgba(255,255,255,.8); }
+    footer a { color: rgba(255,255,255,.75); text-decoration: underline; }
+
+    /* ── Error ── */
+    .error-msg {
+      background: #FEF0EE; border: 1px solid #F5C0B0;
+      color: #8B2010; border-radius: 10px;
+      padding: 1rem 1.5rem; font-size: .92rem; margin: 1rem 2rem;
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:640px){
+      .hero-stats { gap: 1.5rem; }
+      .steps { flex-direction: column; }
+      .step-arrow { transform: rotate(90deg); }
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>📻</span> 阿美語族語教室</div>
+  <div class="nav-links">
+    <a href="#features">功能</a>
+    <a href="#generator">開始產生</a>
+    <a href="#episodes">已播集數</a>
+    <a href="#how">使用說明</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero pattern-bg">
+  <div class="hero-decor"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🌊 阿美族語言傳承計畫</div>
+    <h1>用 AI 製作<br><em>族語廣播教學</em></h1>
+    <p>輸入主題或讓 AI 自動選詞，串接阿美語萌典與族語 E 樂園，幾秒鐘就能產生一集完整廣播教學逐字稿。</p>
+    <div class="hero-cta">
+      <a href="#generator" class="btn btn-primary">🎙️ 立即產生一集</a>
+      <a href="#episodes" class="btn btn-outline">📖 查看範例集數</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">20+</span><span class="stat-label">可用教學主題</span></div>
+    <div class="stat"><span class="stat-num">2</span><span class="stat-label">詞彙資料來源</span></div>
+    <div class="stat"><span class="stat-num">5</span><span class="stat-label">阿美語方言可選</span></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">為什麼用這個</div>
+    <div class="section-title">族語傳承，從廣播開始</div>
+    <p class="section-sub">專為阿美語廣播教學設計，每集都是可直接播出的逐字稿。</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>雙來源即時查驗</h3>
+        <p>每個詞彙同時查詢<strong>阿美語萌典</strong>與<strong>族語 E 樂園</strong>千詞表／例句，確保發音、例句正確。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎙️</div>
+        <h3>廣播格式逐字稿</h3>
+        <p>老師與小美的師生對話，音節拆解、重複帶讀，可直接交給主播錄音。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✨</div>
+        <h3>全自動選題</h3>
+        <p>不知道要教什麼？按一下讓 AI 自動選主題、挑單字，每集都不重複。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>附完整複習表</h3>
+        <p>每集結尾自動附上本集所有阿美語詞彙與例句的複習表，並附 E 樂園練習連結。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌊</div>
+        <h3>文化深度兼具</h3>
+        <p>不只教單字，加入阿美族文化背景說明，讓聽眾在學語言的同時認識族群文化。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>方言可切換</h3>
+        <p>支援南勢、秀姑巒、海岸、馬蘭、恆春等阿美語方言，對應 E 樂園教材編號。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GENERATOR -->
+<section id="generator">
+  <div class="container">
+    <div class="section-label">開始使用</div>
+    <div class="section-title">產生你的族語廣播教學</div>
+    <p class="section-sub">選擇全自動模式，或自訂主題與單字；詞彙可同時查萌典與族語 E 樂園。</p>
+
+    <div class="generator-box">
+      <div class="gen-header">
+        <div>
+          <h3>📻 族語教學產生器</h3>
+          <p>產生後可直接複製使用或下載</p>
+        </div>
+      </div>
+      <div class="gen-body">
+
+        <!-- API Key -->
+        <div class="api-group">
+          <div class="api-icon">🔑</div>
+          <div style="flex:1">
+            <label for="apiKey">Gemini API 金鑰 <span>（必填，不會儲存）</span></label>
+            <input type="password" id="apiKey" placeholder="AIzaSy..." />
+            <div class="api-hint">
+              還沒有 API 金鑰？<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">到 Google AI Studio 申請 →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Model Selector -->
+        <div style="margin-bottom:1.2rem; display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px;">
+            <label for="modelName" style="font-size:.9rem; font-weight:600;">模型選擇</label>
+            <input type="text" id="modelName" placeholder="輸入模型名稱，或按右邊按鈕自動查詢" style="margin-top:.3rem;" />
+          </div>
+          <button type="button" onclick="listModels()" style="margin-top:1.5rem; padding:.65rem 1.2rem; border-radius:8px; border:1.5px solid var(--navy); background:transparent; color:var(--navy); font-weight:600; cursor:pointer; white-space:nowrap;">🔍 查詢可用模型</button>
+        </div>
+        <div id="modelList" style="display:none; margin-bottom:1rem; background:#f0f4ff; border:1px solid #c0d0f0; border-radius:10px; padding:1rem; font-size:.88rem;"></div>
+
+        <!-- Dictionary Sources + Dialect -->
+        <div class="source-group">
+          <div class="source-title">📚 詞彙資料來源（串接族語 E 樂園）</div>
+          <div class="source-options">
+            <label><input type="checkbox" id="useMoedict" checked /> 阿美語萌典</label>
+            <label><input type="checkbox" id="useKlokah" checked /> 族語 E 樂園</label>
+          </div>
+          <div class="form-grid" style="margin-bottom:0;">
+            <div class="form-group">
+              <label for="dialect">阿美語方言 <span>（E 樂園查詢用）</span></label>
+              <select id="dialect">
+                <option value="1">南勢阿美語 (d=1)</option>
+                <option value="2">秀姑巒阿美語 (d=2)</option>
+                <option value="3" selected>海岸阿美語 (d=3)</option>
+                <option value="4">馬蘭阿美語 (d=4)</option>
+                <option value="5">恆春阿美語 (d=5)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="klokahType">E 樂園搜尋範圍</label>
+              <select id="klokahType">
+                <option value="all" selected>全部教材</option>
+                <option value="vo">千詞表</option>
+                <option value="co">生活會話</option>
+                <option value="sp">句型篇</option>
+                <option value="tw">十二年國教教材</option>
+                <option value="ct">文化篇</option>
+              </select>
+            </div>
+          </div>
+          <p style="margin-top:.7rem; font-size:.82rem; color:var(--gray);">
+            API：<a href="https://web.klokah.tw/api/" target="_blank" rel="noopener" style="color:var(--green); text-decoration:underline;">web.klokah.tw/api</a>
+            ｜ 網站：<a href="https://web.klokah.tw/" target="_blank" rel="noopener" style="color:var(--green); text-decoration:underline;">族語 E 樂園</a>
+          </p>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <button type="button" class="mode-tab active" data-mode="auto" onclick="setMode('auto', this)">✨ 全自動（AI 選題選字）</button>
+          <button type="button" class="mode-tab" data-mode="manual" onclick="setMode('manual', this)">✏️ 自訂主題與單字</button>
+        </div>
+
+        <!-- Manual Fields -->
+        <div class="manual-fields" id="manualFields">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="theme">教學主題 <span>（例如：食物、家庭、問候）</span></label>
+              <input type="text" id="theme" placeholder="例：情緒表達" />
+            </div>
+            <div class="form-group">
+              <label for="audience">目標聽眾 <span>（選填）</span></label>
+              <select id="audience">
+                <option value="">一般聽眾</option>
+                <option value="兒童">兒童</option>
+                <option value="青少年">青少年</option>
+                <option value="長輩">長輩</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label for="words">指定單字 <span>（選填，格式：foting（魚）、titi（肉）…）</span></label>
+              <textarea id="words" placeholder="留空讓 AI 根據主題自動選字&#10;例：foting（魚）、titi（肉）、lafi（晚餐）"></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="gen-footer">
+        <button type="button" class="btn-generate" id="genBtn" onclick="generate()">
+          <span id="genIcon">🎙️</span> <span id="genText">產生本集逐字稿</span>
+        </button>
+        <span class="gen-note">約需 30～60 秒，請稍候</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTPUT -->
+<section id="output-section">
+  <div class="container">
+    <div class="output-box">
+      <div class="output-header">
+        <h3>📄 產生結果</h3>
+        <div class="output-actions">
+          <button type="button" class="btn-sm" onclick="toggleExpand(this)">⬆ 展開全文</button>
+          <button type="button" class="btn-sm" onclick="copyOutput()">複製全文</button>
+          <button type="button" class="btn-sm" onclick="downloadOutput()">下載 .txt</button>
+        </div>
+      </div>
+      <textarea id="outputContent" class="output-content" readonly></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- EPISODES -->
+<section id="episodes">
+  <div class="container">
+    <div class="section-label">已製作集數</div>
+    <div class="section-title">範例集數參考</div>
+    <p class="section-sub">以下是已完成的廣播教學集數，點擊可查看內容方向。</p>
+    <div class="ep-grid">
+      <div class="ep-card">
+        <div class="ep-num">EP 01</div>
+        <div class="ep-title">🍽️ 食物與飲食</div>
+        <div class="ep-tags">
+          <span class="ep-tag">foting 魚</span>
+          <span class="ep-tag">titi 肉</span>
+          <span class="ep-tag">lafi 晚餐</span>
+          <span class="ep-tag">komaen 吃</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 02</div>
+        <div class="ep-title">😊 情緒表達</div>
+        <div class="ep-tags">
+          <span class="ep-tag">maolah 喜歡</span>
+          <span class="ep-tag">matalaw 害怕</span>
+          <span class="ep-tag">macocok 被感動</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 03</div>
+        <div class="ep-title">🌿 自然環境</div>
+        <div class="ep-tags">
+          <span class="ep-tag">riyar 海</span>
+          <span class="ep-tag">romi'ad 太陽</span>
+          <span class="ep-tag">foting 魚</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 04</div>
+        <div class="ep-title">🐄 部落動物夥伴</div>
+        <div class="ep-tags">
+          <span class="ep-tag">diyong 豬</span>
+          <span class="ep-tag">kolong 牛</span>
+          <span class="ep-tag">waco 狗</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 05</div>
+        <div class="ep-title">🛡️ 辨識詐騙保護自己</div>
+        <div class="ep-tags">
+          <span class="ep-tag">aka 不要</span>
+          <span class="ep-tag">Cima ko? 你是誰</span>
+          <span class="ep-tag">pirak 錢</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 06</div>
+        <div class="ep-title">🌟 讚美與鼓勵</div>
+        <div class="ep-tags">
+          <span class="ep-tag">makapah 漂亮</span>
+          <span class="ep-tag">fangcalay 完美</span>
+          <span class="ep-tag">maolah 欣賞</span>
+        </div>
+      </div>
+      <div class="ep-card">
+        <div class="ep-num">EP 07</div>
+        <div class="ep-title">🌺 阿美族文化與日常</div>
+        <div class="ep-tags">
+          <span class="ep-tag">mata 眼睛</span>
+          <span class="ep-tag">kawas 祖靈</span>
+          <span class="ep-tag">faki 舅舅</span>
+        </div>
+      </div>
+      <div class="ep-card" style="border-style:dashed; cursor:default; opacity:.6">
+        <div class="ep-num">更多集數</div>
+        <div class="ep-title">使用產生器製作 →</div>
+        <div class="ep-tags">
+          <span class="ep-tag">身體部位</span>
+          <span class="ep-tag">家庭稱謂</span>
+          <span class="ep-tag">豐年祭</span>
+          <span class="ep-tag">天氣</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="section-label">使用說明</div>
+    <div class="section-title">三步驟，產生一集</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>填入 API 金鑰</h4>
+        <p>到 Google AI Studio 申請 Gemini API 金鑰，填入上方欄位</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>選擇模式與方言</h4>
+        <p>全自動或自訂主題；並選擇要查的阿美語方言與資料來源</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>產生 &amp; 使用</h4>
+        <p>約 30 秒後，完整逐字稿出現，複製或下載即可使用</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-banner">
+  <h2>現在就開始製作你的族語廣播教學</h2>
+  <p>讓阿美語在每一個廣播節目裡繼續傳承下去</p>
+  <a href="#generator" class="btn btn-outline">🎙️ 立即產生一集</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    阿美語族語教室 © 2026 ｜
+    詞彙資料來源：<strong>阿美語萌典</strong>（new-amis.moedict.tw）與
+    <strong><a href="https://web.klokah.tw/" target="_blank" rel="noopener">族語 E 樂園</a></strong>
+    ｜ Powered by Gemini AI
+  </p>
+</footer>
+
+<script>
+  const DIALECT_NAMES = {
+    '1': '南勢阿美語',
+    '2': '秀姑巒阿美語',
+    '3': '海岸阿美語',
+    '4': '馬蘭阿美語',
+    '5': '恆春阿美語'
+  };
+
+  // ── List Models ──
+  async function listModels() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) { alert('請先填入 API 金鑰！'); return; }
+    const box = document.getElementById('modelList');
+    box.style.display = 'block';
+    box.innerHTML = '⏳ 查詢中…';
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || '查詢失敗');
+      const models = (data.models || [])
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name.replace('models/', ''));
+      if (models.length === 0) { box.innerHTML = '❌ 找不到可用模型'; return; }
+      box.innerHTML = '<strong>✅ 可用模型（點一下自動填入）：</strong><br><br>' +
+        models.map(m => {
+          const safe = m.replace(/'/g, "\\'");
+          return `<span onclick="document.getElementById('modelName').value='${safe}'" style="display:inline-block;margin:.3rem;padding:.3rem .8rem;background:#fff;border:1px solid #c0d0f0;border-radius:99px;cursor:pointer;">${m}</span>`;
+        }).join('');
+    } catch (e) {
+      box.innerHTML = '❌ ' + e.message;
+    }
+  }
+
+  // ── Mode Toggle ──
+  function setMode(mode, btn) {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    (btn || document.querySelector(`.mode-tab[data-mode="${mode}"]`)).classList.add('active');
+    const manual = document.getElementById('manualFields');
+    if (mode === 'manual') manual.classList.add('show');
+    else manual.classList.remove('show');
+  }
+
+  function cleanWord(word) {
+    return word.trim().split(/[（(]/)[0].trim();
+  }
+
+  function textOf(el, selector) {
+    return el.querySelector(selector)?.textContent?.trim() || '';
+  }
+
+  // ── 真實查詢萌典 ──
+  async function fetchWordFromDict(word) {
+    try {
+      const clean = cleanWord(word);
+      const res = await fetch(`https://new-amis.moedict.tw/terms/${encodeURIComponent(clean)}`);
+      if (!res.ok) return { word: clean, raw: null, summary: '（萌典查無此詞）', links: [] };
+      const data = await res.json();
+      let summary = `【${clean}｜阿美語萌典】\n`;
+      if (Array.isArray(data) && data.length > 0) {
+        data.slice(0, 3).forEach(entry => {
+          if (entry.definition) summary += `  定義：${entry.definition}\n`;
+          if (entry.chinese_definition) summary += `  中文：${entry.chinese_definition}\n`;
+          if (entry.example) summary += `  例句：${entry.example}\n`;
+          if (entry.example_translation) summary += `  例句翻譯：${entry.example_translation}\n`;
+        });
+      } else if (data.definition || data.chinese_definition) {
+        if (data.definition) summary += `  定義：${data.definition}\n`;
+        if (data.chinese_definition) summary += `  中文：${data.chinese_definition}\n`;
+        if (data.example) summary += `  例句：${data.example}\n`;
+      } else {
+        summary += '  （萌典有收錄，但無詳細定義資料）\n';
+      }
+      return {
+        word: clean,
+        raw: data,
+        summary,
+        links: [`https://new-amis.moedict.tw/#/${encodeURIComponent(clean)}`]
+      };
+    } catch (e) {
+      return { word: word, raw: null, summary: `（萌典查詢失敗：${e.message}）`, links: [] };
+    }
+  }
+
+  // ── 查詢族語 E 樂園 ──
+  async function fetchWordFromKlokah(word, dialectId = '3', type = 'all') {
+    const clean = cleanWord(word);
+    const dialectName = DIALECT_NAMES[String(dialectId)] || `方言 ${dialectId}`;
+    try {
+      const url =
+        `https://web.klokah.tw/api/multiSearchResult.php` +
+        `?d=${encodeURIComponent(dialectId)}` +
+        `&txt=${encodeURIComponent(clean)}` +
+        `&type=${encodeURIComponent(type)}` +
+        `&l=yes`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        return { word: clean, raw: null, summary: `（E樂園查詢失敗：HTTP ${res.status}）`, links: [] };
+      }
+
+      const xmlText = await res.text();
+      const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+      if (doc.querySelector('parsererror')) {
+        return { word: clean, raw: null, summary: '（E樂園回傳無法解析）', links: [] };
+      }
+
+      let summary = `【${clean}｜族語E樂園／${dialectName}】\n`;
+      const links = [];
+      let hitCount = 0;
+
+      // 千詞表
+      doc.querySelectorAll('vocabulary > item').forEach((item, idx) => {
+        if (idx >= 3) return;
+        hitCount++;
+        const text = textOf(item, 'text');
+        const chinese = textOf(item, 'chinese');
+        const klass = textOf(item, 'class');
+        const link = textOf(item, 'url');
+        summary += `  [千詞表] ${text}＝${chinese}${klass ? `（${klass}）` : ''}\n`;
+        if (link) links.push(link);
+      });
+
+      // 九階／十二年國教例句
+      [...doc.querySelectorAll('nine > item, twelve > item')].slice(0, 3).forEach(item => {
+        hitCount++;
+        const sentence = textOf(item, 'sentence');
+        const sentenceChinese = textOf(item, 'sentenceChinese');
+        const chinese = textOf(item, 'chinese');
+        const link = textOf(item, 'url');
+        if (sentence) {
+          summary += `  [教材例句] ${sentence}\n`;
+          summary += `  [翻譯] ${sentenceChinese || chinese}\n`;
+        } else if (chinese) {
+          summary += `  [教材] ${textOf(item, 'text')}＝${chinese}\n`;
+        }
+        if (link) links.push(link);
+      });
+
+      // 生活會話
+      [...doc.querySelectorAll('conversation > item')].slice(0, 3).forEach(item => {
+        hitCount++;
+        const text = textOf(item, 'text');
+        const chinese = textOf(item, 'chinese');
+        const link = textOf(item, 'url');
+        summary += `  [生活會話] ${text}（${chinese}）\n`;
+        if (link) links.push(link);
+      });
+
+      // 句型篇
+      [...doc.querySelectorAll('speech > item')].slice(0, 2).forEach(item => {
+        hitCount++;
+        const text = textOf(item, 'text');
+        const chinese = textOf(item, 'chinese');
+        const link = textOf(item, 'url');
+        summary += `  [句型篇] ${text}＝${chinese}\n`;
+        if (link) links.push(link);
+      });
+
+      // 文化篇等其他區塊（有 text/chinese 就取）
+      ['culture', 'dialogue', 'essay', 'reading', 'custom'].forEach(tag => {
+        [...doc.querySelectorAll(`${tag} > item`)].slice(0, 2).forEach(item => {
+          const text = textOf(item, 'text');
+          const chinese = textOf(item, 'chinese');
+          if (!text && !chinese) return;
+          hitCount++;
+          summary += `  [${tag}] ${text}${chinese ? `＝${chinese}` : ''}\n`;
+          const link = textOf(item, 'url');
+          if (link) links.push(link);
+        });
+      });
+
+      if (hitCount === 0) {
+        summary += '  （E樂園查無此詞）\n';
+      } else {
+        const uniqueLinks = [...new Set(links)].slice(0, 3);
+        if (uniqueLinks.length) {
+          summary += '  練習連結：\n';
+          uniqueLinks.forEach(u => { summary += `  - ${u}\n`; });
+        }
+      }
+
+      return { word: clean, raw: xmlText, summary, links: [...new Set(links)] };
+    } catch (e) {
+      return { word: clean, raw: null, summary: `（E樂園查詢失敗：${e.message}）`, links: [] };
+    }
+  }
+
+  // ── 合併雙來源查詢 ──
+  async function lookupWord(word, options) {
+    const { useMoedict, useKlokah, dialectId, klokahType } = options;
+    const parts = [];
+    const links = [];
+    const clean = cleanWord(word);
+
+    if (!useMoedict && !useKlokah) {
+      return { word: clean, summary: `【${clean}】\n  （未啟用任何資料來源）\n`, links: [] };
+    }
+
+    const tasks = [];
+    if (useMoedict) tasks.push(fetchWordFromDict(word));
+    if (useKlokah) tasks.push(fetchWordFromKlokah(word, dialectId, klokahType));
+
+    const results = await Promise.all(tasks);
+    results.forEach(r => {
+      parts.push(r.summary);
+      if (r.links) links.push(...r.links);
+    });
+
+    return {
+      word: clean,
+      summary: parts.join('\n'),
+      links: [...new Set(links)]
+    };
+  }
+
+  // ── 呼叫 Gemini ──
+  async function callGemini(apiKey, modelName, prompt) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 8192 }
+        })
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `API 錯誤 ${res.status}`);
+    }
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '（沒有收到回應）';
+  }
+
+  // ── Generate ──
+  async function generate() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const isManual = document.getElementById('manualFields').classList.contains('show');
+    const theme = document.getElementById('theme').value.trim();
+    const words = document.getElementById('words').value.trim();
+    const audience = document.getElementById('audience').value;
+    const modelName = document.getElementById('modelName').value.trim() || 'gemini-2.0-flash';
+    const useMoedict = document.getElementById('useMoedict').checked;
+    const useKlokah = document.getElementById('useKlokah').checked;
+    const dialectId = document.getElementById('dialect').value;
+    const klokahType = document.getElementById('klokahType').value;
+    const dialectName = DIALECT_NAMES[dialectId] || dialectId;
+
+    if (!apiKey) { alert('請填入 Gemini API 金鑰！'); return; }
+    if (!useMoedict && !useKlokah) {
+      alert('請至少勾選一個詞彙資料來源（萌典或族語 E 樂園）！');
+      return;
+    }
+
+    const outSec = document.getElementById('output-section');
+    const outDiv = document.getElementById('outputContent');
+    outSec.style.display = 'block';
+    outSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    document.getElementById('genText').textContent = '產生中…';
+    document.getElementById('genIcon').textContent = '⏳';
+
+    const sourceLabel = [
+      useMoedict ? '阿美語萌典' : null,
+      useKlokah ? `族語E樂園（${dialectName}）` : null
+    ].filter(Boolean).join(' + ');
+
+    try {
+      let wordList = [];
+      let pickedTheme = theme;
+
+      if (isManual && words) {
+        wordList = words.split(/[,，、\n]/).map(w => w.trim()).filter(Boolean);
+      } else {
+        outDiv.value = `🔍 步驟 1/3：請 AI 選出教學主題與單字…\n資料來源：${sourceLabel}`;
+        const pickPrompt = `請為阿美語廣播教學節目選出一個主題和4個單字。
+主題方向：${theme || '日常生活（請自行選擇，避免重複食物、情緒、讚美、自然、動物、防詐騙、文化日常）'}
+${audience ? `目標聽眾：${audience}` : ''}
+方言參考：${dialectName}
+
+請只輸出以下格式，不要其他文字：
+主題：xxx
+單字：word1, word2, word3, word4
+
+單字請用阿美語羅馬拼音，例如：foting, titi, lafi, komaen`;
+        const pickResult = await callGemini(apiKey, modelName, pickPrompt);
+        const themeMatch = pickResult.match(/主題[：:]\s*(.+)/);
+        const wordMatch = pickResult.match(/單字[：:]\s*(.+)/);
+        if (themeMatch) pickedTheme = themeMatch[1].trim();
+        if (wordMatch) {
+          wordList = wordMatch[1].split(/[,，、]/).map(w => w.trim()).filter(Boolean);
+        }
+        outDiv.value += `\n✅ AI 選詞完成：${wordList.join('、')}${pickedTheme ? `（主題：${pickedTheme}）` : ''}`;
+      }
+
+      if (wordList.length === 0) {
+        throw new Error('未能取得教學單字，請改用自訂模式手動輸入單字。');
+      }
+
+      // 步驟二：雙來源查詞
+      outDiv.value += `\n\n🔍 步驟 2/3：正在查詢 ${sourceLabel}…\n`;
+      const dictResults = [];
+      for (const word of wordList) {
+        outDiv.value += `  查詢中：${word}…\n`;
+        const result = await lookupWord(word, { useMoedict, useKlokah, dialectId, klokahType });
+        dictResults.push(result);
+        outDiv.value += `  ✅ ${result.summary}\n`;
+      }
+
+      // 步驟三：把真實字典資料餵給 Gemini 寫逐字稿
+      outDiv.value += '\n✍️ 步驟 3/3：根據真實辭典／教材資料生成逐字稿…';
+
+      const dictContext = dictResults.map(r => r.summary).join('\n');
+      const allLinks = [...new Set(dictResults.flatMap(r => r.links || []))].slice(0, 12);
+      const linksBlock = allLinks.length
+        ? allLinks.map(u => `- ${u}`).join('\n')
+        : '（本次查詢未取得教材連結）';
+
+      const scriptPrompt = `你是阿美語廣播教學節目的製作人兼編劇。
+
+以下是從「阿美語萌典」（new-amis.moedict.tw）與「族語 E 樂園」（web.klokah.tw）查詢到的真實詞彙／教材資料。
+請完全根據這份資料撰寫教學內容，不可自行發明或修改詞彙意思。
+若兩來源有差異，請以教材例句為輔、以詞義定義為主，並可在稿中簡短說明。
+
+方言：${dialectName}
+本集主題提示：${pickedTheme || theme || '（由你依資料歸納）'}
+
+===== 查詢結果 =====
+${dictContext}
+====================
+
+===== E樂園／相關練習連結 =====
+${linksBlock}
+===============================
+
+請根據以上真實資料，按照格式產生完整的十分鐘廣播逐字稿：
+
+格式規定：
+- 開頭顯示：📻 本集主題：xxx ／ 本集詞彙：xxx、xxx... ／ 方言：${dialectName}
+- 人物：老師（主持）、小美（學生搭檔）
+- 語氣：口語自然、像朋友聊天
+- 結構：音樂開場 → 開場（1分鐘）→ 逐字教學每字（各約2分鐘，含音節拆解、帶讀兩輪）→ 整合例句練習 → 結語 → 音樂結束
+- 阿美語詞彙用粗體(**詞**)標示
+- 帶讀格式：縮排，老師念一次 → 小美念一次，重複兩輪
+- 結尾附上完整複習表（表格格式，含所有詞彙與例句+中文翻譯）
+- 複習表最後加一欄「延伸練習」，放上上方提供的 E 樂園連結（若有）
+- 全程繁體中文
+- 【重要】詞彙意思請嚴格依照查詢資料，不可自行更改；若資料不足，請在逐字稿中如實說明
+- 【重要】請一定要寫到最後，包含結語、結束音樂提示與完整複習表，不可中途停止
+${audience ? `- 目標聽眾：${audience}` : ''}`;
+
+      const script = await callGemini(apiKey, modelName, scriptPrompt);
+      window._lastOutput = script;
+      outDiv.value = script;
+
+    } catch (e) {
+      outDiv.value = `❌ 產生失敗：${e.message}\n\n請確認 Gemini API 金鑰、模型名稱，以及詞彙資料來源設定。`;
+    } finally {
+      btn.disabled = false;
+      document.getElementById('genText').textContent = '產生本集逐字稿';
+      document.getElementById('genIcon').textContent = '🎙️';
+    }
+  }
+
+  // ── Expand / Collapse ──
+  let _expanded = false;
+  function toggleExpand(btn) {
+    const box = document.getElementById('outputContent');
+    _expanded = !_expanded;
+    if (_expanded) {
+      box.style.maxHeight = 'none';
+      btn.textContent = '⬇ 收合';
+    } else {
+      box.style.maxHeight = '';
+      btn.textContent = '⬆ 展開全文';
+    }
+  }
+
+  // ── Copy ──
+  function copyOutput() {
+    const el = document.getElementById('outputContent');
+    el.select();
+    navigator.clipboard.writeText(el.value).then(() => alert('已複製到剪貼簿！'));
+  }
+
+  // ── Download ──
+  function downloadOutput() {
+    const text = window._lastOutput || document.getElementById('outputContent').value;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `阿美語族語教室_${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+  }
+
+  // ── Enter key on API field ──
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('apiKey').addEventListener('keydown', e => {
+      if (e.key === 'Enter') generate();
+    });
+  });
+</script>
+</body>
+</html>
