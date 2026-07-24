@@ -9,6 +9,8 @@
 |---|---|
 | `index.html` | Landing page（單一 HTML 檔，零依賴），可直接部署到任何靜態網站空間 |
 | `embed.html` | 嵌入版小工具：貼進現有網頁的「自訂 HTML」區塊即可，樣式只作用在小工具內部，不影響原網站版面 |
+| `deploy/kapah_zyfy.html` | 給 https://my.kapah.tw/tools/zyfy/ 用的 Django 完整頁面範本（需登入） |
+| `deploy/zyfy_widget.html` | 同上，只有小工具本體（嵌進既有 layout 用） |
 | `tools/ilrdf_tts.py` | 命令列批次工具：`python3 ilrdf_tts.py --ethnicity 太魯閣 --file sentences.txt` |
 | `tools/ilrdf_tts_gui.py` | 桌面 GUI 版（tkinter，Python 內建），適合批次做教材音檔 |
 
