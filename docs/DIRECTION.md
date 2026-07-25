@@ -158,8 +158,10 @@
 
 ```
 部落 Tribe
-  └─ 階級 Grade（順序、級名、職責）
-  └─ 族人 Member（姓名、族語名、gradeId、專長、動員狀態、聯絡）
+  └─ 年段／階級 Grade
+        section: chief | elder | kapot
+        顯示序：歷任頭目 → 部落耆老 → 部落階級（年長→年幼）
+  └─ 族人 Member（華語名、族語名、gradeId、專長、動員狀態、聯絡）
   └─ 使用者 User（登入帳號，可綁 Member）
   └─ 活動 Event
         └─ 任務 Task（需要的人／專長）
