@@ -1,0 +1,146 @@
+{
+  "meta": {
+    "id": "2026-07-25-kinship-01",
+    "dialectId": 3,
+    "dialect": "海岸阿美語",
+    "theme": "親屬稱謂",
+    "level": "初級",
+    "targetWords": ["mama", "ina", "kaka", "faki", "fai"],
+    "createdAt": "2026-07-25T00:00:00Z",
+    "source": "amis-lesson-dialogue",
+    "notes": "示範課：家庭見面問候"
+  },
+  "warmup": [
+    {
+      "amis": "mama",
+      "zh": "爸爸",
+      "note": "親屬稱謂；課堂可搭配指人練習"
+    },
+    {
+      "amis": "ina",
+      "zh": "媽媽",
+      "note": "親屬稱謂"
+    },
+    {
+      "amis": "kaka",
+      "zh": "兄長／哥哥姊姊通稱",
+      "note": "依語境可指哥哥或姊姊"
+    }
+  ],
+  "dialogue": [
+    {
+      "speaker": "A",
+      "amis": "Ngala’ ko romi’ad, kaka.",
+      "zh": "你好，哥哥／姊姊。",
+      "highlight": ["kaka"],
+      "needsReview": true
+    },
+    {
+      "speaker": "B",
+      "amis": "Ngala’ ko romi’ad. Ira ko mama iso?",
+      "zh": "你好。你爸爸在嗎？",
+      "highlight": ["mama"],
+      "needsReview": true
+    },
+    {
+      "speaker": "A",
+      "amis": "Ira. Ira ko ina ako.",
+      "zh": "有。我媽媽也在。",
+      "highlight": ["ina", "ira"],
+      "needsReview": false
+    },
+    {
+      "speaker": "B",
+      "amis": "Manay ko faki iso?",
+      "zh": "你的伯父／叔叔／舅舅呢？",
+      "highlight": ["faki"],
+      "needsReview": true
+    },
+    {
+      "speaker": "A",
+      "amis": "Ira ko faki ato fai ako.",
+      "zh": "我伯父／叔叔／舅舅和伯母／嬸嬸／舅母都在。",
+      "highlight": ["faki", "fai"],
+      "needsReview": true
+    },
+    {
+      "speaker": "B",
+      "amis": "Kapahay. Minanam kita to sowal no finacadan.",
+      "zh": "很好。我們一起學族語。",
+      "highlight": [],
+      "needsReview": true
+    }
+  ],
+  "pattern": [
+    {
+      "amis": "Ira ko ___ iso?",
+      "zh": "你有／你的 ___ 在嗎？",
+      "slots": ["親屬稱謂"]
+    },
+    {
+      "amis": "Ira ko ___ ako.",
+      "zh": "我有／我的 ___。",
+      "slots": ["親屬稱謂"]
+    }
+  ],
+  "practice": [
+    {
+      "type": "match",
+      "prompt": "把族語與中文配對",
+      "choices": ["mama=爸爸", "ina=媽媽", "kaka=兄長／哥哥姊姊", "faki=伯父／叔叔／舅舅通稱"]
+    },
+    {
+      "type": "fill",
+      "prompt": "補上：Ira ko ____ iso?（你爸爸在嗎？）",
+      "answer": "mama"
+    },
+    {
+      "type": "reorder",
+      "prompt": "排出正確語序：ako / ina / Ira / ko",
+      "tokens": ["Ira", "ko", "ina", "ako"],
+      "answer": "Ira ko ina ako."
+    }
+  ],
+  "sources": [
+    {
+      "word": "mama",
+      "zh": "爸爸",
+      "class": "04親屬稱謂",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=01",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/mama"
+    },
+    {
+      "word": "ina",
+      "zh": "媽媽",
+      "class": "04親屬稱謂",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=02",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/ina"
+    },
+    {
+      "word": "kaka",
+      "zh": "兄長",
+      "class": "04親屬稱謂",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=18",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/kaka"
+    },
+    {
+      "word": "faki",
+      "zh": "(伯父；叔叔；舅舅)通稱",
+      "class": "04親屬稱謂",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=25",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/faki"
+    },
+    {
+      "word": "fai",
+      "zh": "(伯母；嬸嬸；舅母)通稱",
+      "class": "04親屬稱謂",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=26",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/fai"
+    }
+  ]
+}
