@@ -1,0 +1,222 @@
+{
+  "meta": {
+    "id": "2026-07-25-food-01",
+    "dialectId": 1,
+    "dialect": "南勢阿美語",
+    "theme": "飲食",
+    "level": "初級",
+    "targetWords": [
+      "hemay",
+      "titi",
+      "pawli",
+      "kaysing",
+      "nanum",
+      "dateng",
+      "epah"
+    ],
+    "createdAt": "2026-07-25T00:12:03Z",
+    "source": "amis-lesson-dialogue",
+    "notes": "用餐場景：點飯、肉菜、喝水與水果；部分句子採自族語E樂園生活會話，其餘 AI 組句待族語教師覆核。"
+  },
+  "warmup": [
+    {
+      "amis": "hemay",
+      "zh": "飯",
+      "note": "千詞表：21食物(非植物)"
+    },
+    {
+      "amis": "titi",
+      "zh": "肉",
+      "note": "千詞表歸類為身體部位；用餐語境指可食用的肉"
+    },
+    {
+      "amis": "dateng",
+      "zh": "青菜",
+      "note": "可與 titi 並用練習「肉／菜」"
+    },
+    {
+      "amis": "nanum",
+      "zh": "水",
+      "note": "口渴時常用詢問句"
+    },
+    {
+      "amis": "pawli",
+      "zh": "香蕉",
+      "note": "水果詞；可接在 Mangalay haw tu ___?"
+    },
+    {
+      "amis": "kaysing",
+      "zh": "碗",
+      "note": "餐具；練習把食物／水放進碗裡"
+    },
+    {
+      "amis": "epah",
+      "zh": "酒",
+      "note": "宴會或餐飲詢問用語"
+    }
+  ],
+  "dialogue": [
+    {
+      "speaker": "A",
+      "amis": "Hay! Mangalay haw tu hemay?",
+      "zh": "需要白飯嗎？",
+      "highlight": ["hemay"],
+      "needsReview": false
+    },
+    {
+      "speaker": "B",
+      "amis": "Hay i. Patayni i tu hemay.",
+      "zh": "好的，來個白飯吧。",
+      "highlight": ["hemay"],
+      "needsReview": false
+    },
+    {
+      "speaker": "A",
+      "amis": "Ira haw ku titi?",
+      "zh": "有肉嗎？",
+      "highlight": ["titi"],
+      "needsReview": true
+    },
+    {
+      "speaker": "B",
+      "amis": "Ira. Ira ku titi atu dateng.",
+      "zh": "有。有肉和青菜。",
+      "highlight": ["titi", "dateng"],
+      "needsReview": true
+    },
+    {
+      "speaker": "A",
+      "amis": "Masu’aw, ira haw ku nanum?",
+      "zh": "口好渴，有水喝嗎？",
+      "highlight": ["nanum"],
+      "needsReview": false
+    },
+    {
+      "speaker": "B",
+      "amis": "Ira ku nanum i kaysing.",
+      "zh": "碗裡有水。",
+      "highlight": ["nanum", "kaysing"],
+      "needsReview": true
+    },
+    {
+      "speaker": "A",
+      "amis": "Mangalay haw tu pawli?",
+      "zh": "需要香蕉嗎？",
+      "highlight": ["pawli"],
+      "needsReview": true
+    },
+    {
+      "speaker": "B",
+      "amis": "Hay i. Awaay ku epah anini.",
+      "zh": "好的。今天沒有酒。",
+      "highlight": ["epah"],
+      "needsReview": true
+    }
+  ],
+  "pattern": [
+    {
+      "amis": "Mangalay haw tu ___?",
+      "zh": "需要 ___ 嗎？",
+      "slots": ["食物"]
+    },
+    {
+      "amis": "Ira haw ku ___?",
+      "zh": "有 ___ 嗎？",
+      "slots": ["食物／飲料"]
+    },
+    {
+      "amis": "Ira ku ___.",
+      "zh": "有 ___。",
+      "slots": ["食物／飲料"]
+    }
+  ],
+  "practice": [
+    {
+      "type": "match",
+      "prompt": "把族語與中文配對",
+      "choices": [
+        "hemay=飯",
+        "titi=肉",
+        "dateng=青菜",
+        "nanum=水",
+        "pawli=香蕉",
+        "kaysing=碗",
+        "epah=酒"
+      ]
+    },
+    {
+      "type": "fill",
+      "prompt": "補上：Hay! Mangalay haw tu ____?（需要白飯嗎？）",
+      "answer": "hemay"
+    },
+    {
+      "type": "fill",
+      "prompt": "補上：Masu’aw, ira haw ku ____?（口好渴，有水喝嗎？）",
+      "answer": "nanum"
+    },
+    {
+      "type": "reorder",
+      "prompt": "排出正確語序：titi / Ira / ku / haw",
+      "tokens": ["Ira", "haw", "ku", "titi"],
+      "answer": "Ira haw ku titi?"
+    }
+  ],
+  "sources": [
+    {
+      "word": "hemay",
+      "zh": "飯",
+      "class": "21食物(非植物)",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=21&n=01",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/hemay"
+    },
+    {
+      "word": "titi",
+      "zh": "肉",
+      "class": "06身體部位",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=06&n=15",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/titi"
+    },
+    {
+      "word": "pawli",
+      "zh": "香蕉",
+      "class": "08植物",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=08&n=01",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/pawli"
+    },
+    {
+      "word": "kaysing",
+      "zh": "碗",
+      "class": "09物品(不含食品)",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=09&n=33",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/kaysing"
+    },
+    {
+      "word": "nanum",
+      "zh": "水",
+      "class": "21食物(非植物)",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=21&n=02",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/nanum"
+    },
+    {
+      "word": "dateng",
+      "zh": "青菜",
+      "class": "21食物(非植物)",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=21&n=05",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/dateng"
+    },
+    {
+      "word": "epah",
+      "zh": "酒",
+      "class": "21食物(非植物)",
+      "url": "https://web.klokah.tw/vocabulary/index.php?d=1&c=21&n=06",
+      "provider": "klokah",
+      "moedictUrl": "https://new-amis.moedict.tw/terms/epah"
+    }
+  ]
+}
