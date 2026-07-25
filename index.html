@@ -1314,6 +1314,7 @@
 
     save();
     closeMemberModal();
+    closePersonSheet();
     renderAll();
   });
 
@@ -1324,6 +1325,7 @@
     state.members = state.members.filter((m) => m.id !== id);
     save();
     closeMemberModal();
+    closePersonSheet();
     renderAll();
   });
 
