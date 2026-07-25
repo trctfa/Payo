@@ -1,0 +1,745 @@
+<!-- ============================================================
+     族語對話課（工直）：嵌入版
+     用法：貼進 Django tools 頁 content 區塊。
+     ============================================================ -->
+<style>
+    :root {
+      --bg: #f5f5f4;
+      --card: #ffffff;
+      --ink: #1c1917;
+      --muted: #78716c;
+      --line: #e7e5e4;
+      --accent: #b45309;
+      --accent-soft: #fff7ed;
+      --ok: #166534;
+      --warn: #92400e;
+      --shadow: 0 10px 30px rgba(28, 25, 23, 0.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #ffedd5 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #e7e5e4 0%, transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 28px 16px 64px; }
+    .head a { color: var(--accent); text-decoration: none; font-size: 14px; }
+    .head h1 {
+      margin: 10px 0 6px;
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: clamp(28px, 5vw, 36px);
+      letter-spacing: .02em;
+    }
+    .head p { margin: 0; color: var(--muted); line-height: 1.7; font-size: 15px; }
+    .panel {
+      margin-top: 20px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input, select, textarea, button {
+      font: inherit;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #fdba74;
+      box-shadow: 0 0 0 3px rgba(251, 146, 60, .22);
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.ghost {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button.soft { background: #292524; }
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+    .status.error { color: #b91c1c; }
+    .status.ok { color: var(--ok); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--accent-soft);
+      color: #9a3412;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+    .lesson { display: none; margin-top: 20px; }
+    .lesson.show { display: block; }
+    .lesson h2 {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      margin: 22px 0 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .turn {
+      border-left: 3px solid #fdba74;
+      padding: 10px 0 10px 14px;
+      margin: 0 0 10px;
+    }
+    .turn .who {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .turn .amis {
+      font-size: 20px;
+      line-height: 1.45;
+      margin-bottom: 4px;
+    }
+    .turn .zh { color: var(--muted); font-size: 14px; }
+    .turn .mark {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--warn);
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .hl {
+      background: linear-gradient(transparent 60%, #fed7aa 60%);
+      border-radius: 2px;
+    }
+    .practice {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      background: #fafaf9;
+    }
+    .practice .type {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .sources a {
+      color: var(--accent);
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .foot {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .foot a { color: var(--accent); }
+  </style>
+<div class="wrap">
+    <header class="head">
+      <a href="/">← 回到 Kapah</a>
+      <h1>族語對話課</h1>
+      <p>選主題或讓系統抽題，從族語 E 樂園抓已驗證單字，再生成可在網頁直接上課的對話逐字稿。</p>
+    </header>
+
+    <section class="panel" id="setup">
+      <div class="grid">
+        <div>
+          <label for="dialect">阿美語方言</label>
+          <select id="dialect">
+            <option value="1">南勢阿美語</option>
+            <option value="2">秀姑巒阿美語</option>
+            <option value="3" selected>海岸阿美語</option>
+            <option value="4">馬蘭阿美語</option>
+            <option value="5">恆春阿美語</option>
+          </select>
+        </div>
+        <div>
+          <label for="level">程度</label>
+          <select id="level">
+            <option>初級</option>
+            <option>中級</option>
+          </select>
+        </div>
+        <div>
+          <label for="mode">主題模式</label>
+          <select id="mode">
+            <option value="theme">指定主題</option>
+            <option value="auto">電腦自動選主題</option>
+            <option value="words">自己輸入單字</option>
+          </select>
+        </div>
+        <div id="themeBox">
+          <label for="theme">主題</label>
+          <select id="theme"></select>
+        </div>
+      </div>
+
+      <div id="wordsBox" style="display:none; margin-top:12px;">
+        <label for="words">阿美語單字（逗號分隔）</label>
+        <input id="words" placeholder="例：mama,ina,kaka,hemay">
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="apiKey">Gemini API 金鑰（產課用，只存在此瀏覽器）</label>
+        <input id="apiKey" type="password" placeholder="AIza..." autocomplete="off">
+        <p class="hint">還沒有金鑰？到 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> 申請。若只想「播放既有 JSON」，可不填。</p>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="btnFetch">1. 抓今日詞彙</button>
+        <button type="button" class="soft" id="btnGenerate" disabled>2. 生成對話課</button>
+        <button type="button" class="ghost" id="btnLoad">開啟 JSON</button>
+        <button type="button" class="ghost" id="btnDemo">載入示範課</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json" hidden>
+      <div class="status" id="status">準備就緒。</div>
+      <div class="chips" id="vocabChips"></div>
+    </section>
+
+    <section class="lesson panel" id="lessonView">
+      <div class="actions" style="margin-top:0; justify-content:flex-end;">
+        <button type="button" class="ghost" id="btnDownload">下載 JSON</button>
+        <button type="button" class="ghost" id="btnCopy">複製 JSON</button>
+      </div>
+      <h2 id="lessonTitle">課程</h2>
+      <div class="meta" id="lessonMeta"></div>
+      <div id="lessonBody"></div>
+    </section>
+
+    <p class="foot">
+      詞彙來源：
+      <a href="https://web.klokah.tw/api/" target="_blank" rel="noopener">族語 E 樂園 API</a>
+      、
+      <a href="https://new-amis.moedict.tw/" target="_blank" rel="noopener">阿美語萌典</a>
+      。AI 只負責編排對話，目標單字皆需來自 API 驗證結果。
+    </p>
+  </div>
+
+  <script>
+  (() => {
+    const DIALECTS = {
+      "1": "南勢阿美語",
+      "2": "秀姑巒阿美語",
+      "3": "海岸阿美語",
+      "4": "馬蘭阿美語",
+      "5": "恆春阿美語"
+    };
+
+    const THEME_SEEDS = {
+      "親屬稱謂": { classPrefix: "04", seeds: ["mama", "ina", "kaka", "faki", "fai", "ama"] },
+      "人物身分": { classPrefix: "05", seeds: ["widang", "kapah", "tamdaw", "fafahiyan", "fa'inayan", "mato'asay"] },
+      "數字計量": { classPrefix: "01", seeds: ["cecay", "tosa", "tolo", "sepat", "lima"] },
+      "飲食": { classPrefix: null, seeds: ["komaen", "nanom", "hemay", "titi", "pawli", "foting", "losay", "kaysing"] },
+      "家與建築": { classPrefix: "12", seeds: ["loma'", "pitilidan"] },
+      "代名詞": { classPrefix: "02", seeds: ["kiso", "mako"] }
+    };
+
+    const DEMO_LESSON = {
+      meta: {
+        id: "2026-07-25-kinship-01",
+        dialectId: 3,
+        dialect: "海岸阿美語",
+        theme: "親屬稱謂",
+        level: "初級",
+        targetWords: ["mama", "ina", "kaka", "faki", "fai"],
+        createdAt: "2026-07-25T00:00:00Z",
+        source: "amis-lesson-dialogue",
+        notes: "示範課：家庭見面問候"
+      },
+      warmup: [
+        { amis: "mama", zh: "爸爸" },
+        { amis: "ina", zh: "媽媽" },
+        { amis: "kaka", zh: "兄長／哥哥姊姊通稱" }
+      ],
+      dialogue: [
+        { speaker: "A", amis: "Ngala’ ko romi’ad, kaka.", zh: "你好，哥哥／姊姊。", highlight: ["kaka"], needsReview: true },
+        { speaker: "B", amis: "Ngala’ ko romi’ad. Ira ko mama iso?", zh: "你好。你爸爸在嗎？", highlight: ["mama"], needsReview: true },
+        { speaker: "A", amis: "Ira. Ira ko ina ako.", zh: "有。我媽媽也在。", highlight: ["ina"], needsReview: false },
+        { speaker: "B", amis: "Manay ko faki iso?", zh: "你的伯父／叔叔／舅舅呢？", highlight: ["faki"], needsReview: true },
+        { speaker: "A", amis: "Ira ko faki ato fai ako.", zh: "我伯父／叔叔／舅舅和伯母／嬸嬸／舅母都在。", highlight: ["faki", "fai"], needsReview: true },
+        { speaker: "B", amis: "Kapahay.", zh: "很好。", highlight: [], needsReview: true }
+      ],
+      pattern: [
+        { amis: "Ira ko ___ iso?", zh: "你有／你的 ___ 在嗎？", slots: ["親屬稱謂"] },
+        { amis: "Ira ko ___ ako.", zh: "我有／我的 ___。", slots: ["親屬稱謂"] }
+      ],
+      practice: [
+        { type: "match", prompt: "把族語與中文配對", choices: ["mama=爸爸", "ina=媽媽", "kaka=兄長"] },
+        { type: "fill", prompt: "補上：Ira ko ____ iso?（你爸爸在嗎？）", answer: "mama" }
+      ],
+      sources: [
+        { word: "mama", zh: "爸爸", class: "04親屬稱謂", url: "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=01", provider: "klokah", moedictUrl: "https://new-amis.moedict.tw/terms/mama" },
+        { word: "ina", zh: "媽媽", class: "04親屬稱謂", url: "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=02", provider: "klokah", moedictUrl: "https://new-amis.moedict.tw/terms/ina" },
+        { word: "kaka", zh: "兄長", class: "04親屬稱謂", url: "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=18", provider: "klokah", moedictUrl: "https://new-amis.moedict.tw/terms/kaka" },
+        { word: "faki", zh: "(伯父；叔叔；舅舅)通稱", class: "04親屬稱謂", url: "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=25", provider: "klokah", moedictUrl: "https://new-amis.moedict.tw/terms/faki" },
+        { word: "fai", zh: "(伯母；嬸嬸；舅母)通稱", class: "04親屬稱謂", url: "https://web.klokah.tw/vocabulary/index.php?d=3&c=04&n=26", provider: "klokah", moedictUrl: "https://new-amis.moedict.tw/terms/fai" }
+      ]
+    };
+
+    const els = {
+      dialect: document.getElementById("dialect"),
+      level: document.getElementById("level"),
+      mode: document.getElementById("mode"),
+      theme: document.getElementById("theme"),
+      themeBox: document.getElementById("themeBox"),
+      wordsBox: document.getElementById("wordsBox"),
+      words: document.getElementById("words"),
+      apiKey: document.getElementById("apiKey"),
+      status: document.getElementById("status"),
+      chips: document.getElementById("vocabChips"),
+      btnFetch: document.getElementById("btnFetch"),
+      btnGenerate: document.getElementById("btnGenerate"),
+      btnLoad: document.getElementById("btnLoad"),
+      btnDemo: document.getElementById("btnDemo"),
+      btnDownload: document.getElementById("btnDownload"),
+      btnCopy: document.getElementById("btnCopy"),
+      fileInput: document.getElementById("fileInput"),
+      lessonView: document.getElementById("lessonView"),
+      lessonTitle: document.getElementById("lessonTitle"),
+      lessonMeta: document.getElementById("lessonMeta"),
+      lessonBody: document.getElementById("lessonBody")
+    };
+
+    let vocabPack = null;
+    let currentLesson = null;
+
+    function norm(s) {
+      return String(s || "").trim().replace(/[’‘]/g, "'").toLowerCase();
+    }
+
+    function setStatus(msg, type) {
+      els.status.textContent = msg;
+      els.status.className = "status" + (type ? " " + type : "");
+    }
+
+    function sleep(ms) {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    function fillThemes() {
+      els.theme.innerHTML = Object.keys(THEME_SEEDS)
+        .map((name) => `<option value="${name}">${name}</option>`)
+        .join("");
+    }
+
+    function syncMode() {
+      const mode = els.mode.value;
+      els.themeBox.style.display = mode === "theme" ? "block" : "none";
+      els.wordsBox.style.display = mode === "words" ? "block" : "none";
+    }
+
+    async function klokahSearch(dialect, text, type = "vo") {
+      const url =
+        "https://web.klokah.tw/api/multiSearchResult.php?" +
+        new URLSearchParams({ d: dialect, txt: text, type, f: "yes" });
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`E樂園查詢失敗（${res.status}）`);
+      const xml = await res.text();
+      const doc = new DOMParser().parseFromString(xml, "text/xml");
+      return [...doc.querySelectorAll("item")].map((item) => ({
+        word: (item.querySelector("text")?.textContent || "").trim(),
+        zh: (item.querySelector("chinese")?.textContent || "").trim(),
+        class: (item.querySelector("class")?.textContent || "").trim(),
+        order: (item.querySelector("order")?.textContent || "").trim(),
+        url: (item.querySelector("url")?.textContent || "").trim(),
+        itemType: (item.querySelector("type")?.textContent || "").trim() || null,
+        provider: "klokah",
+        moedictUrl: "https://new-amis.moedict.tw/terms/" + encodeURIComponent(norm((item.querySelector("text")?.textContent || "").trim()))
+      })).filter((x) => x.word);
+    }
+
+    function pickBest(query, items, classPrefix) {
+      if (!items.length) return null;
+      const q = norm(query);
+      const ranked = [...items].sort((a, b) => {
+        const ae = norm(a.word) === q ? 0 : 1;
+        const be = norm(b.word) === q ? 0 : 1;
+        if (ae !== be) return ae - be;
+        if (!classPrefix) return 0;
+        const ac = (a.class || "").startsWith(classPrefix) ? 0 : 1;
+        const bc = (b.class || "").startsWith(classPrefix) ? 0 : 1;
+        return ac - bc;
+      });
+      return ranked[0];
+    }
+
+    async function collectSeeds(dialect, seeds, classPrefix, limit = 8) {
+      const found = [];
+      const seen = new Set();
+      for (const seed of seeds) {
+        try {
+          const items = await klokahSearch(dialect, seed, "vo");
+          const best = pickBest(seed, items, classPrefix);
+          if (best) {
+            const key = norm(best.word);
+            if (!seen.has(key)) {
+              seen.add(key);
+              found.push(best);
+            }
+          }
+        } catch (err) {
+          console.warn(seed, err);
+        }
+        if (found.length >= limit) break;
+        await sleep(120);
+      }
+      return found;
+    }
+
+    function renderChips(words) {
+      els.chips.innerHTML = words
+        .map((w) => `<span class="chip"><strong>${w.word}</strong> ${w.zh}</span>`)
+        .join("");
+    }
+
+    async function fetchVocab() {
+      const dialect = els.dialect.value;
+      const mode = els.mode.value;
+      let theme = els.theme.value;
+      let seeds = [];
+      let classPrefix = null;
+
+      if (mode === "words") {
+        theme = "自選單字";
+        seeds = els.words.value.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean);
+        if (!seeds.length) {
+          setStatus("請先輸入至少 3 個單字。", "error");
+          return;
+        }
+      } else if (mode === "auto") {
+        const keys = Object.keys(THEME_SEEDS);
+        theme = keys[Math.floor(Math.random() * keys.length)];
+        seeds = [...THEME_SEEDS[theme].seeds].sort(() => Math.random() - 0.5);
+        classPrefix = THEME_SEEDS[theme].classPrefix;
+      } else {
+        seeds = [...THEME_SEEDS[theme].seeds];
+        classPrefix = THEME_SEEDS[theme].classPrefix;
+      }
+
+      els.btnFetch.disabled = true;
+      els.btnGenerate.disabled = true;
+      setStatus(`正在從族語 E 樂園抓「${theme}」詞彙…`);
+      try {
+        const words = await collectSeeds(dialect, seeds, classPrefix, 8);
+        if (!words.length) throw new Error("找不到已驗證詞彙，請換主題或單字。");
+        vocabPack = {
+          dialectId: Number(dialect),
+          dialect: DIALECTS[dialect],
+          theme,
+          mode,
+          count: words.length,
+          words
+        };
+        renderChips(words);
+        els.btnGenerate.disabled = false;
+        setStatus(`已抓到 ${words.length} 個詞（${theme}／${DIALECTS[dialect]}）。可以生成對話課了。`, "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus(err.message || String(err), "error");
+      } finally {
+        els.btnFetch.disabled = false;
+      }
+    }
+
+    function extractJson(text) {
+      const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const raw = fenced ? fenced[1] : text;
+      const start = raw.indexOf("{");
+      const end = raw.lastIndexOf("}");
+      if (start < 0 || end < 0) throw new Error("AI 沒有回傳 JSON");
+      return JSON.parse(raw.slice(start, end + 1));
+    }
+
+    async function callGemini(apiKey, prompt) {
+      const model = "gemini-2.0-flash";
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7 }
+          })
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `Gemini 錯誤 ${res.status}`);
+      const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+      if (!text) throw new Error("Gemini 沒有產生內容");
+      return text;
+    }
+
+    function validateLesson(lesson, pack) {
+      if (!lesson || typeof lesson !== "object") throw new Error("課程格式錯誤");
+      for (const key of ["meta", "warmup", "dialogue", "pattern", "practice", "sources"]) {
+        if (!(key in lesson)) throw new Error(`缺少欄位：${key}`);
+      }
+      const targets = lesson.meta?.targetWords || [];
+      if (targets.length < 3) throw new Error("targetWords 至少要 3 個");
+      if (!Array.isArray(lesson.dialogue) || lesson.dialogue.length < 4) {
+        throw new Error("dialogue 至少要 4 句");
+      }
+      const packWords = new Set((pack?.words || []).map((w) => norm(w.word)));
+      for (const w of targets) {
+        if (packWords.size && !packWords.has(norm(w))) {
+          throw new Error(`目標詞不在詞彙包內：${w}`);
+        }
+      }
+      lesson.meta.source = "amis-lesson-dialogue";
+      return lesson;
+    }
+
+    async function generateLesson() {
+      if (!vocabPack?.words?.length) {
+        setStatus("請先抓今日詞彙。", "error");
+        return;
+      }
+      const apiKey = els.apiKey.value.trim() || localStorage.getItem("amisLessonGeminiKey") || "";
+      if (!apiKey) {
+        setStatus("請填入 Gemini API 金鑰才能生成。", "error");
+        return;
+      }
+      localStorage.setItem("amisLessonGeminiKey", apiKey);
+      els.apiKey.value = apiKey;
+
+      els.btnGenerate.disabled = true;
+      els.btnFetch.disabled = true;
+      setStatus("AI 正在編寫對話課…");
+
+      const id = new Date().toISOString().slice(0, 10) + "-" + Date.now().toString(36);
+      const prompt = `你是阿美語教學助教。請只根據下列「已驗證詞彙包」產生一課對話教學 JSON。
+硬性規則：
+1. 只把詞彙包內的詞當必學目標詞，不可發明未驗證族語單詞
+2. 全程使用指定方言
+3. 每句同時提供 amis + zh
+4. AI 自編、非原文抄錄的句子 needsReview=true
+5. 只輸出單一 JSON 物件，不要 markdown
+
+JSON 結構必須包含：
+meta{id,dialectId,dialect,theme,level,targetWords,createdAt,source,notes},
+warmup[{amis,zh,note?}],
+dialogue[{speaker,amis,zh,highlight[],needsReview}],
+pattern[{amis,zh,slots[]}],
+practice[{type:fill|match|reorder|speak,prompt,answer?,choices?,tokens?}],
+sources[{word,zh,class,url,provider,moedictUrl}]
+
+輸入：
+dialectId=${vocabPack.dialectId}
+dialect=${vocabPack.dialect}
+theme=${vocabPack.theme}
+level=${els.level.value}
+lessonId=${id}
+vocabPack=${JSON.stringify(vocabPack.words)}
+source 固定填 "amis-lesson-dialogue"
+createdAt 用 ISO 時間
+dialogue 6-10 句，practice 至少 2 題
+sources 必須涵蓋全部 targetWords，url/moedictUrl 用詞彙包既有值`;
+
+      try {
+        const text = await callGemini(apiKey, prompt);
+        const lesson = validateLesson(extractJson(text), vocabPack);
+        currentLesson = lesson;
+        renderLesson(lesson);
+        setStatus("對話課已生成。不確定句子已標示「待人工確認」。", "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus(err.message || String(err), "error");
+      } finally {
+        els.btnGenerate.disabled = false;
+        els.btnFetch.disabled = false;
+      }
+    }
+
+    function highlightAmis(text, words) {
+      if (!text) return "";
+      let html = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      const list = [...(words || [])].sort((a, b) => b.length - a.length);
+      for (const w of list) {
+        if (!w) continue;
+        const safe = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        html = html.replace(new RegExp(safe, "gi"), (m) => `<span class="hl">${m}</span>`);
+      }
+      return html;
+    }
+
+    function renderLesson(lesson) {
+      const m = lesson.meta || {};
+      els.lessonView.classList.add("show");
+      els.lessonTitle.textContent = `${m.theme || "課程"}｜${m.dialect || ""}`;
+      els.lessonMeta.textContent =
+        `程度：${m.level || "—"}　目標詞：${(m.targetWords || []).join("、")}　id：${m.id || "—"}`;
+
+      const warmup = (lesson.warmup || [])
+        .map((w) => `<div class="chip"><strong>${w.amis}</strong> ${w.zh}${w.note ? `｜${w.note}` : ""}</div>`)
+        .join("");
+
+      const dialogue = (lesson.dialogue || [])
+        .map((t) => `
+          <div class="turn">
+            <div class="who">${t.speaker || ""}</div>
+            <div class="amis">${highlightAmis(t.amis, t.highlight || m.targetWords)}</div>
+            <div class="zh">${t.zh || ""}</div>
+            ${t.needsReview ? '<div class="mark">待人工確認</div>' : ""}
+          </div>`)
+        .join("");
+
+      const pattern = (lesson.pattern || [])
+        .map((p) => `<div class="practice"><div class="type">句型</div><div class="amis">${p.amis || ""}</div><div class="zh">${p.zh || ""}</div></div>`)
+        .join("");
+
+      const practice = (lesson.practice || [])
+        .map((p) => `
+          <div class="practice">
+            <div class="type">${p.type || "練習"}</div>
+            <div>${p.prompt || ""}</div>
+            ${p.answer ? `<div class="zh">答案：${p.answer}</div>` : ""}
+            ${Array.isArray(p.choices) ? `<div class="zh">${p.choices.join(" ｜ ")}</div>` : ""}
+            ${Array.isArray(p.tokens) ? `<div class="zh">${p.tokens.join(" / ")}</div>` : ""}
+          </div>`)
+        .join("");
+
+      const sources = (lesson.sources || [])
+        .map((s) => `
+          <div class="practice">
+            <strong>${s.word}</strong> ${s.zh || ""} ${s.class ? `（${s.class}）` : ""}<br>
+            ${s.url ? `<a href="${s.url}" target="_blank" rel="noopener">E樂園</a>` : ""}
+            ${s.moedictUrl ? ` · <a href="${s.moedictUrl}" target="_blank" rel="noopener">萌典</a>` : ""}
+          </div>`)
+        .join("");
+
+      els.lessonBody.innerHTML = `
+        <div class="section-title">今日單字</div>
+        <div class="chips">${warmup}</div>
+        <div class="section-title">對話</div>
+        ${dialogue || "<p class='hint'>沒有對話</p>"}
+        <div class="section-title">句型</div>
+        ${pattern || "<p class='hint'>沒有句型</p>"}
+        <div class="section-title">練習</div>
+        ${practice || "<p class='hint'>沒有練習</p>"}
+        <div class="section-title">來源</div>
+        <div class="sources">${sources}</div>
+      `;
+      els.lessonView.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function downloadLesson() {
+      if (!currentLesson) return;
+      const blob = new Blob([JSON.stringify(currentLesson, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (currentLesson.meta?.id || "amis-lesson") + ".json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function copyLesson() {
+      if (!currentLesson) return;
+      await navigator.clipboard.writeText(JSON.stringify(currentLesson, null, 2));
+      setStatus("已複製 JSON。", "ok");
+    }
+
+    function loadLessonObject(obj) {
+      currentLesson = obj;
+      if (obj?.meta?.targetWords && Array.isArray(obj.sources)) {
+        vocabPack = {
+          dialectId: obj.meta.dialectId,
+          dialect: obj.meta.dialect,
+          theme: obj.meta.theme,
+          mode: "loaded",
+          count: obj.meta.targetWords.length,
+          words: obj.sources.map((s) => ({
+            word: s.word,
+            zh: s.zh,
+            class: s.class,
+            url: s.url,
+            provider: s.provider,
+            moedictUrl: s.moedictUrl
+          }))
+        };
+        renderChips(vocabPack.words);
+        els.btnGenerate.disabled = false;
+      }
+      renderLesson(obj);
+      setStatus("已載入課程。", "ok");
+    }
+
+    // init
+    fillThemes();
+    syncMode();
+    const savedKey = localStorage.getItem("amisLessonGeminiKey");
+    if (savedKey) els.apiKey.value = savedKey;
+
+    els.mode.addEventListener("change", syncMode);
+    els.btnFetch.addEventListener("click", fetchVocab);
+    els.btnGenerate.addEventListener("click", generateLesson);
+    els.btnDemo.addEventListener("click", () => loadLessonObject(structuredClone(DEMO_LESSON)));
+    els.btnLoad.addEventListener("click", () => els.fileInput.click());
+    els.fileInput.addEventListener("change", async () => {
+      const file = els.fileInput.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        loadLessonObject(JSON.parse(text));
+      } catch (err) {
+        setStatus("JSON 讀取失敗：" + err.message, "error");
+      } finally {
+        els.fileInput.value = "";
+      }
+    });
+    els.btnDownload.addEventListener("click", downloadLesson);
+    els.btnCopy.addEventListener("click", copyLesson);
+  })();
+  </script>

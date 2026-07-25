@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://my.kapah.tw/schemas/amis-lesson.schema.json",
+  "title": "AmisLessonDialogue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meta", "warmup", "dialogue", "pattern", "practice", "sources"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "dialectId",
+        "dialect",
+        "theme",
+        "level",
+        "targetWords",
+        "createdAt",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable lesson id, e.g. 2026-07-25-kinship-01"
+        },
+        "dialectId": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Klokah dialect code (阿美語 1-5)"
+        },
+        "dialect": {
+          "type": "string",
+          "examples": ["海岸阿美語", "南勢阿美語", "秀姑巒阿美語", "馬蘭阿美語", "恆春阿美語"]
+        },
+        "theme": { "type": "string" },
+        "level": {
+          "type": "string",
+          "enum": ["初級", "中級", "中高級", "高級"]
+        },
+        "targetWords": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 16,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "type": "string",
+          "const": "amis-lesson-dialogue"
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "warmup": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["amis", "zh"],
+        "properties": {
+          "amis": { "type": "string" },
+          "zh": { "type": "string" },
+          "note": { "type": "string" },
+          "audioUrl": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "dialogue": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["speaker", "amis", "zh"],
+        "properties": {
+          "speaker": { "type": "string", "minLength": 1 },
+          "amis": { "type": "string", "minLength": 1 },
+          "zh": { "type": "string", "minLength": 1 },
+          "highlight": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "needsReview": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "pattern": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["amis", "zh"],
+        "properties": {
+          "amis": { "type": "string" },
+          "zh": { "type": "string" },
+          "slots": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    },
+    "practice": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "prompt"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["fill", "match", "reorder", "speak"]
+          },
+          "prompt": { "type": "string" },
+          "answer": { "type": "string" },
+          "choices": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "tokens": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["word", "zh", "url", "provider"],
+        "properties": {
+          "word": { "type": "string" },
+          "zh": { "type": "string" },
+          "class": { "type": "string" },
+          "url": { "type": "string" },
+          "provider": {
+            "type": "string",
+            "enum": ["klokah", "amis-moedict", "manual"]
+          },
+          "moedictUrl": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
