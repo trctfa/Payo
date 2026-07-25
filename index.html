@@ -357,26 +357,100 @@
     font-size: 0.9rem;
   }
 
-  /* —— Members —— */
-  .member-grid {
+  /* —— Members: grade accordion → names → detail —— */
+  .grade-acc {
     display: grid;
-    gap: 0;
+    gap: 0.55rem;
   }
 
-  .member-row {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 0.8fr 1fr auto;
-    gap: 0.75rem;
+  .grade-acc-item {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 252, 246, 0.72);
+    overflow: hidden;
+  }
+
+  .grade-acc-trigger {
+    width: 100%;
+    display: flex;
     align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--line);
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
   }
 
-  .member-row:hover { background: rgba(255,255,255,0.35); }
+  .grade-acc-trigger:hover { background: rgba(31, 107, 110, 0.06); }
 
-  .member-name {
+  .grade-acc-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
     font-weight: 700;
   }
+
+  .grade-acc-meta {
+    display: block;
+    margin-top: 0.2rem;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .grade-acc-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--sea-deep);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .chevron {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    opacity: 0.7;
+  }
+
+  .grade-acc-item.open .chevron { transform: rotate(-135deg); }
+
+  .grade-acc-panel {
+    display: none;
+    border-top: 1px solid var(--line);
+    padding: 0.35rem 0.5rem 0.65rem;
+  }
+
+  .grade-acc-item.open .grade-acc-panel { display: block; }
+
+  .person-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.7rem;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+  }
+
+  .person-row:hover { background: rgba(31, 107, 110, 0.07); }
+
+  .person-row.highlight {
+    background: rgba(201, 146, 42, 0.14);
+  }
+
+  .member-name { font-weight: 700; }
 
   .member-amis {
     display: block;
@@ -385,7 +459,21 @@
     font-weight: 500;
   }
 
-  .member-muted { color: var(--muted); font-size: 0.92rem; }
+  .status-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.available { background: #2f8f6b; }
+  .status-dot.limited { background: var(--millet); }
+  .status-dot.away { background: #9aa8a4; }
+
+  .person-go {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
 
   .badge {
     display: inline-flex;
@@ -403,6 +491,44 @@
     padding: 2.5rem 0;
     color: var(--muted);
     text-align: center;
+  }
+
+  .detail-sheet {
+    width: min(440px, 100%);
+    margin: 0;
+    margin-left: auto;
+    max-height: 100%;
+    min-height: min(100%, 520px);
+    border-radius: 22px 0 0 22px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-sheet .sheet-body { flex: 1; }
+  .detail-kv {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+  }
+  .detail-kv div {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.7rem;
+  }
+  .detail-kv dt {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 0.2rem;
+  }
+  .detail-kv dd {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .privacy-note {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
   }
 
   /* —— Forms / panels —— */
@@ -518,14 +644,16 @@
 
   @media (max-width: 860px) {
     .split { grid-template-columns: 1fr; }
-    .member-row {
-      grid-template-columns: 1fr 1fr;
-      gap: 0.4rem 0.75rem;
-    }
-    .member-row .span-2 { grid-column: 1 / -1; }
-    .member-actions { grid-column: 1 / -1; justify-self: start; }
     .grade-item { grid-template-columns: auto 1fr; }
     .grade-item .ord { padding-bottom: 0; align-self: center; }
+    .detail-sheet {
+      width: 100%;
+      border-radius: 22px 22px 0 0;
+      margin: auto 0 0;
+      max-height: min(88vh, 720px);
+      min-height: 0;
+    }
+    #personSheet.open { align-items: flex-end; }
   }
 
   @media (max-width: 560px) {
@@ -581,12 +709,12 @@
       <div class="section-head">
         <span class="section-kicker">Roster</span>
         <h2>族人名冊</h2>
-        <p>資料存在這個瀏覽器（localStorage），也可匯出備份。換電腦請先匯出 JSON。</p>
+        <p>先開<strong>階級</strong>，再看<strong>華語名／族語名</strong>；點進去才拉出個人資料（個資不直接攤開）。</p>
       </div>
 
       <div class="toolbar">
         <div class="toolbar-left">
-          <input class="search-input" id="searchInput" type="search" placeholder="搜尋姓名、族語名、備註…" aria-label="搜尋族人">
+          <input class="search-input" id="searchInput" type="search" placeholder="搜尋華語名、族語名…" aria-label="搜尋族人">
           <select id="filterGrade" aria-label="篩選階級">
             <option value="">全部階級</option>
           </select>
@@ -601,7 +729,7 @@
         </div>
       </div>
 
-      <div class="member-grid" id="memberList"></div>
+      <div class="grade-acc" id="memberList"></div>
     </div>
   </section>
 
@@ -700,6 +828,18 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="personSheet" role="dialog" aria-modal="true" aria-labelledby="personSheetTitle">
+  <div class="modal detail-sheet">
+    <h3 id="personSheetTitle">個人資料</h3>
+    <p class="privacy-note">僅授權可見 · 電話預設隱藏</p>
+    <div class="sheet-body" id="personSheetBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary btn-small" type="button" id="btnEditFromSheet">編輯</button>
+      <button class="btn btn-soft btn-small" type="button" id="btnCloseSheet">關閉</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
   const STORAGE_KEY = "payo-kapot-manpower-v1";
@@ -764,6 +904,9 @@
 
   let state = load();
   let editingDraftGrades = null;
+  let openGradeId = null;
+  let sheetMemberId = null;
+  let phoneRevealed = false;
 
   const $ = (id) => document.getElementById(id);
   const tribeTitle = $("tribeTitle");
@@ -777,6 +920,9 @@
   const memberModal = $("memberModal");
   const memberForm = $("memberForm");
   const memberModalTitle = $("memberModalTitle");
+  const personSheet = $("personSheet");
+  const personSheetBody = $("personSheetBody");
+  const personSheetTitle = $("personSheetTitle");
 
   function gradeById(id) {
     return state.grades.find((g) => g.id === id);
@@ -844,50 +990,139 @@
     $("mGrade").innerHTML = opts || `<option value="">請先設定階級</option>`;
   }
 
-  function renderMembers() {
+  function filteredMembers() {
     const q = searchInput.value.trim().toLowerCase();
     const gid = filterGrade.value;
-
-    const list = state.members
+    return state.members
       .filter((m) => !gid || m.gradeId === gid)
       .filter((m) => {
         if (!q) return true;
-        const hay = [m.name, m.amisName, m.skill, m.note, m.phone, gradeLabel(m.gradeId)]
-          .join(" ")
-          .toLowerCase();
+        const hay = [m.name, m.amisName, gradeLabel(m.gradeId)].join(" ").toLowerCase();
         return hay.includes(q);
       })
-      .sort((a, b) => {
-        const ai = state.grades.findIndex((g) => g.id === a.gradeId);
-        const bi = state.grades.findIndex((g) => g.id === b.gradeId);
-        if (ai !== bi) return ai - bi;
-        return (a.name || "").localeCompare(b.name || "", "zh-Hant");
-      });
+      .sort((a, b) => (a.name || "").localeCompare(b.name || "", "zh-Hant"));
+  }
 
-    if (!list.length) {
-      memberList.innerHTML = `<div class="empty">目前沒有符合的族人。按「新增族人」開始登錄。</div>`;
+  function renderMembers() {
+    const q = searchInput.value.trim().toLowerCase();
+    const gid = filterGrade.value;
+    const matched = filteredMembers();
+    const grades = state.grades.filter((g) => !gid || g.id === gid);
+
+    if (!grades.length) {
+      memberList.innerHTML = `<div class="empty">請先在下方設定至少一個階級。</div>`;
       return;
     }
 
-    memberList.innerHTML = list
-      .map(
-        (m) => `
-        <article class="member-row" data-id="${m.id}">
-          <div class="span-2">
-            <div class="member-name">${escapeHtml(m.name)}
-              ${m.amisName ? `<span class="member-amis">${escapeHtml(m.amisName)}</span>` : ""}
-            </div>
-          </div>
-          <div><span class="badge">${escapeHtml(gradeLabel(m.gradeId))}</span></div>
-          <div class="member-muted">${STATUS_LABEL[m.status] || m.status}</div>
-          <div class="member-muted">${escapeHtml(m.skill || "—")}</div>
-          <div class="member-actions">
-            <button class="btn btn-soft btn-small" type="button" data-edit="${m.id}">編輯</button>
-          </div>
-        </article>
-      `
-      )
+    // 搜尋時自動展開有命中的階級
+    if (q) {
+      const hit = grades.find((g) => matched.some((m) => m.gradeId === g.id));
+      if (hit) openGradeId = hit.id;
+    }
+
+    memberList.innerHTML = grades
+      .map((g) => {
+        const people = matched.filter((m) => m.gradeId === g.id);
+        const totalInGrade = state.members.filter((m) => m.gradeId === g.id).length;
+        const isOpen = openGradeId === g.id;
+        const personHtml = people.length
+          ? people
+              .map((m) => {
+                const hit =
+                  q &&
+                  [m.name, m.amisName].join(" ").toLowerCase().includes(q);
+                return `
+                <button type="button" class="person-row${hit ? " highlight" : ""}" data-open-person="${m.id}">
+                  <span>
+                    <span class="member-name">${escapeHtml(m.name)}</span>
+                    ${m.amisName ? `<span class="member-amis">${escapeHtml(m.amisName)}</span>` : ""}
+                  </span>
+                  <span style="display:flex;align-items:center;gap:.55rem">
+                    <span class="status-dot ${escapeAttr(m.status || "available")}" title="${STATUS_LABEL[m.status] || ""}"></span>
+                    <span class="person-go">資料 ›</span>
+                  </span>
+                </button>`;
+              })
+              .join("")
+          : `<div class="empty" style="padding:1rem">此階級目前沒有符合的人。</div>`;
+
+        return `
+          <div class="grade-acc-item${isOpen ? " open" : ""}" data-grade="${g.id}">
+            <button type="button" class="grade-acc-trigger" data-toggle-grade="${g.id}" aria-expanded="${isOpen}">
+              <span>
+                <span class="grade-acc-title">${escapeHtml(g.name)}</span>
+                <span class="grade-acc-meta">${escapeHtml(g.role || "年齡階級")}</span>
+              </span>
+              <span class="grade-acc-right">
+                ${q ? `${people.length}/` : ""}${totalInGrade} 人
+                <span class="chevron" aria-hidden="true"></span>
+              </span>
+            </button>
+            <div class="grade-acc-panel">${personHtml}</div>
+          </div>`;
+      })
       .join("");
+  }
+
+  function openPersonSheet(member) {
+    sheetMemberId = member.id;
+    phoneRevealed = false;
+    personSheetTitle.textContent = member.name || "個人資料";
+    renderPersonSheetBody(member);
+    personSheet.classList.add("open");
+  }
+
+  function renderPersonSheetBody(member) {
+    const phone = member.phone || "";
+    const phoneBlock = phone
+      ? phoneRevealed
+        ? `<dd>${escapeHtml(phone)}
+            <div class="form-actions" style="margin-top:.5rem">
+              <a class="btn btn-soft btn-small" href="tel:${escapeAttr(phone)}">撥打</a>
+              <button class="btn btn-soft btn-small" type="button" data-copy-phone="${escapeAttr(phone)}">複製</button>
+            </div>
+          </dd>`
+        : `<dd><button class="btn btn-soft btn-small" type="button" id="btnRevealPhone">顯示電話</button></dd>`
+      : `<dd>未填寫</dd>`;
+
+    personSheetBody.innerHTML = `
+      <dl class="detail-kv">
+        <div>
+          <dt>華語名字</dt>
+          <dd>${escapeHtml(member.name || "—")}</dd>
+        </div>
+        <div>
+          <dt>族語名稱</dt>
+          <dd>${escapeHtml(member.amisName || "—")}</dd>
+        </div>
+        <div>
+          <dt>年齡階級</dt>
+          <dd><span class="badge">${escapeHtml(gradeLabel(member.gradeId))}</span></dd>
+        </div>
+        <div>
+          <dt>動員狀態</dt>
+          <dd>${STATUS_LABEL[member.status] || member.status || "—"}</dd>
+        </div>
+        <div>
+          <dt>專長／可協助</dt>
+          <dd>${escapeHtml(member.skill || "—")}</dd>
+        </div>
+        <div>
+          <dt>聯絡電話</dt>
+          ${phoneBlock}
+        </div>
+        <div>
+          <dt>備註</dt>
+          <dd>${escapeHtml(member.note || "—")}</dd>
+        </div>
+      </dl>
+    `;
+  }
+
+  function closePersonSheet() {
+    personSheet.classList.remove("open");
+    sheetMemberId = null;
+    phoneRevealed = false;
   }
 
   function syncTribeTitle() {
@@ -1010,20 +1245,48 @@
   // Events
   $("btnAddMember").addEventListener("click", () => openMemberModal(null));
   $("btnCancelMember").addEventListener("click", closeMemberModal);
+  $("btnCloseSheet").addEventListener("click", closePersonSheet);
+  $("btnEditFromSheet").addEventListener("click", () => {
+    const member = state.members.find((m) => m.id === sheetMemberId);
+    if (!member) return;
+    closePersonSheet();
+    openMemberModal(member);
+  });
+
   memberModal.addEventListener("click", (e) => {
     if (e.target === memberModal) closeMemberModal();
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && memberModal.classList.contains("open")) {
-      closeMemberModal();
+  personSheet.addEventListener("click", (e) => {
+    if (e.target === personSheet) closePersonSheet();
+    if (e.target.id === "btnRevealPhone") {
+      phoneRevealed = true;
+      const member = state.members.find((m) => m.id === sheetMemberId);
+      if (member) renderPersonSheetBody(member);
+      return;
     }
+    const copyBtn = e.target.closest("[data-copy-phone]");
+    if (copyBtn?.dataset.copyPhone) {
+      navigator.clipboard?.writeText(copyBtn.dataset.copyPhone);
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (memberModal.classList.contains("open")) closeMemberModal();
+    else if (personSheet.classList.contains("open")) closePersonSheet();
   });
 
   memberList.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-edit]");
-    if (!btn) return;
-    const member = state.members.find((m) => m.id === btn.dataset.edit);
-    if (member) openMemberModal(member);
+    const toggle = e.target.closest("[data-toggle-grade]");
+    if (toggle) {
+      const id = toggle.dataset.toggleGrade;
+      openGradeId = openGradeId === id ? null : id;
+      renderMembers();
+      return;
+    }
+    const personBtn = e.target.closest("[data-open-person]");
+    if (!personBtn) return;
+    const member = state.members.find((m) => m.id === personBtn.dataset.openPerson);
+    if (member) openPersonSheet(member);
   });
 
   memberForm.addEventListener("submit", (e) => {
