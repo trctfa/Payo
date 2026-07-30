@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">輸入法快捷鈕</string>
+    <string name="channel_name">輸入法快捷</string>
+    <string name="channel_description">常駐通知，點一下即可切換輸入法</string>
+    <string name="notification_title">切換輸入法</string>
+    <string name="notification_text">點通知或「切換」按鈕，開啟輸入法選單</string>
+    <string name="action_switch_ime">切換</string>
+    <string name="action_open_app">設定</string>
+    <string name="action_stop">關閉</string>
+    <string name="main_title">輸入法通知快捷鈕</string>
+    <string name="main_subtitle">啟用後會在通知列留下一則常駐通知。點通知或「切換」即可跳出系統輸入法選單，再選注音、無蝦米或其他輸入法。</string>
+    <string name="status_on">狀態：已啟用（通知列應看得到快捷鈕）</string>
+    <string name="status_off">狀態：未啟用</string>
+    <string name="btn_enable">啟用通知快捷鈕</string>
+    <string name="btn_disable">關閉通知快捷鈕</string>
+    <string name="btn_test">測試：開啟輸入法選單</string>
+    <string name="tips_title">紅米 / HyperOS 建議</string>
+    <string name="tips_body">1. 允許通知權限\n2. 設定 → 應用程式 → 輸入法快捷鈕 → 省電策略改為「無限制」\n3. 允許自啟動，重開機後通知才會自動回來\n4. 若通知被收進「靜音通知」，到通知頻道把「輸入法快捷」設為顯示</string>
+    <string name="permission_denied">未允許通知權限，無法顯示快捷鈕</string>
+    <string name="notification_enabled">已啟用通知快捷鈕</string>
+    <string name="notification_disabled">已關閉通知快捷鈕</string>
+</resources>
