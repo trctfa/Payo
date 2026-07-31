@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">輸入法快捷鈕</string>
+    <string name="tile_label">切換輸入法</string>
+    <string name="channel_name">輸入法快捷</string>
+    <string name="channel_description">常駐通知，點一下即可切換輸入法</string>
+    <string name="notification_title">切換輸入法</string>
+    <string name="notification_text">點這裡或按「切換」，開啟輸入法選單</string>
+    <string name="action_switch_ime">切換</string>
+    <string name="action_open_app">設定</string>
+    <string name="action_stop">關閉</string>
+    <string name="main_title">輸入法快捷鈕</string>
+    <string name="main_subtitle">紅米請優先用「控制中心快捷開關」：下拉兩次 → 按鉛筆編輯 → 找到「切換輸入法」加進去。之後下拉點一下就能換輸入法。</string>
+    <string name="status_on">狀態：已啟用。請改用控制中心快捷開關（下方教學）。通知若被紅米隱藏也沒關係。</string>
+    <string name="status_off">狀態：可先按測試確認選單正常，再到控制中心加入快捷開關。</string>
+    <string name="status_notif_blocked">狀態：通知被關掉了。沒關係，請改用控制中心快捷開關（更適合紅米）。</string>
+    <string name="btn_enable">順便啟用常駐通知（可選）</string>
+    <string name="btn_disable">關閉常駐通知</string>
+    <string name="btn_test">先測試：開啟輸入法選單</string>
+    <string name="btn_open_notification_settings">打開通知設定</string>
+    <string name="btn_open_battery_settings">打開省電／自啟動設定</string>
+    <string name="tips_title">紅米加入控制中心快捷開關</string>
+    <string name="tips_body">1. 從螢幕頂端往下拉兩次，打開控制中心（一排開關的地方）\n2. 按右上角或下方的「鉛筆／編輯」\n3. 在下方未使用的開關裡找「切換輸入法」\n4. 把它拖到上方，按完成\n5. 之後每次下拉，點「切換輸入法」就能換注音／無蝦米\n\n若找不到這個開關：先打開本 App 一次，再重開機後再編輯控制中心。</string>
+    <string name="permission_denied">未允許通知權限。仍可使用控制中心快捷開關。</string>
+    <string name="notification_enabled">已嘗試顯示通知。紅米建議改用控制中心的「切換輸入法」開關。</string>
+    <string name="notification_disabled">已關閉常駐通知</string>
+    <string name="open_settings_failed">打不開設定頁，請手動到系統設定找這個 App</string>
+</resources>

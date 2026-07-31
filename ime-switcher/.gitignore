@@ -1,0 +1,21 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.ap_
+*.aab
+# Keep the phone-install APK under release/, ignore other APKs
+*.apk
+!release/*.apk
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
