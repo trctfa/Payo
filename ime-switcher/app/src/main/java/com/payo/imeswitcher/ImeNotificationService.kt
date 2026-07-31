@@ -66,10 +66,10 @@ class ImeNotificationService : Service() {
             .setContentIntent(openPickerPending)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .addAction(
                 R.drawable.ic_keyboard,
                 getString(R.string.action_switch_ime),

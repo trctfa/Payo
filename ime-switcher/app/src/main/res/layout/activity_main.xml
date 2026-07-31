@@ -64,6 +64,32 @@
             app:strokeColor="@color/accent" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenNotificationSettings"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:text="@string/btn_open_notification_settings"
+            android:textAllCaps="false"
+            android:textColor="@color/text_primary"
+            app:strokeColor="@color/accent" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenBatterySettings"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:text="@string/btn_open_battery_settings"
+            android:textAllCaps="false"
+            android:textColor="@color/text_primary"
+            app:strokeColor="@color/accent" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTestPicker"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
