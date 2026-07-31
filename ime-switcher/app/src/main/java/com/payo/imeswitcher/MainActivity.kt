@@ -22,8 +22,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            startNotificationService()
-            maybeAskBatteryExemption()
+            startNotificationShortcut()
         } else {
             Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
             updateUi()
@@ -36,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnEnable.setOnClickListener { requestAndStart() }
-        binding.btnDisable.setOnClickListener { stopNotificationService() }
+        binding.btnDisable.setOnClickListener { stopNotificationShortcut() }
         binding.btnTestPicker.setOnClickListener {
             startActivity(Intent(this, ImePickerActivity::class.java))
         }
@@ -49,12 +48,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateUi()
-        // If user already enabled it, refresh the foreground notification after returning.
         if (Prefs.isServiceEnabled(this) && NotificationHelper.areNotificationsEnabled(this)) {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, ImeNotificationService::class.java)
-            )
+            NotificationHelper.postOngoing(this)
+            tryStartForegroundService()
         }
     }
 
@@ -70,24 +66,37 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-        startNotificationService()
-        maybeAskBatteryExemption()
+        startNotificationShortcut()
     }
 
-    private fun startNotificationService() {
+    private fun startNotificationShortcut() {
         NotificationHelper.ensureChannel(this)
         Prefs.setServiceEnabled(this, true)
-        ContextCompat.startForegroundService(
-            this,
-            Intent(this, ImeNotificationService::class.java)
-        )
+
+        // Post first so HyperOS still shows something even if FGS is blocked.
+        NotificationHelper.postOngoing(this)
+        tryStartForegroundService()
+        maybeAskBatteryExemption()
+
         updateUi()
         Toast.makeText(this, R.string.notification_enabled, Toast.LENGTH_LONG).show()
     }
 
-    private fun stopNotificationService() {
+    private fun tryStartForegroundService() {
+        try {
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, ImeNotificationService::class.java)
+            )
+        } catch (_: Exception) {
+            // Keep the plain ongoing notification.
+        }
+    }
+
+    private fun stopNotificationShortcut() {
         Prefs.setServiceEnabled(this, false)
         stopService(Intent(this, ImeNotificationService::class.java))
+        NotificationHelper.cancel(this)
         updateUi()
         Toast.makeText(this, R.string.notification_disabled, Toast.LENGTH_SHORT).show()
     }

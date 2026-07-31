@@ -10,6 +10,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             ACTION_STOP -> {
                 Prefs.setServiceEnabled(context, false)
                 context.stopService(Intent(context, ImeNotificationService::class.java))
+                NotificationHelper.cancel(context)
             }
         }
     }

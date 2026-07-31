@@ -10,9 +10,14 @@ class BootReceiver : BroadcastReceiver() {
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
         if (!Prefs.isServiceEnabled(context)) return
 
-        ContextCompat.startForegroundService(
-            context,
-            Intent(context, ImeNotificationService::class.java)
-        )
+        NotificationHelper.postOngoing(context)
+        try {
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, ImeNotificationService::class.java)
+            )
+        } catch (_: Exception) {
+            // Plain notification is enough as fallback.
+        }
     }
 }
