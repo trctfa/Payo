@@ -12,6 +12,11 @@
 
 ## 用 Android Studio 安裝到手機
 
+**不會寫程式？請直接看完整逐步教學：**  
+[`一步一步安裝教學.md`](一步一步安裝教學.md)
+
+精簡版：
+
 1. 安裝 [Android Studio](https://developer.android.com/studio)
 2. 開啟本資料夾 `ime-switcher`
 3. 用 USB 連接紅米 12 5G Pro，開啟「開發人員選項」與「USB 偵錯」
