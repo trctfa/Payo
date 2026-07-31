@@ -8,9 +8,11 @@
 /captures/
 .externalNativeBuild/
 .cxx/
-*.apk
 *.ap_
 *.aab
+# Keep the phone-install APK under release/, ignore other APKs
+*.apk
+!release/*.apk
 *.dex
 *.class
 bin/
